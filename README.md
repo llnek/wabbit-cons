@@ -1,2 +1,2 @@
-# wabbit-shell
-The wabbit console
+# wabbit-cons
+The wabbit console/shell
