@@ -8,7 +8,7 @@
  * You must not remove this notice, or any other, from this software.
  */
 
-package czlab.test.xlib;
+package czlab.test.wabbit.cons;
 
 import mikera.cljunit.ClojureTest;
 import java.util.Arrays;
@@ -21,14 +21,7 @@ public class ClojureJUnit extends ClojureTest {
   @Override
   public List<String> namespaces() {
     return Arrays.asList(new String[] {
-      "czlab.test.xlib.coreutils",
-      "czlab.test.xlib.dateutils",
-      "czlab.test.xlib.misc",
-      "czlab.test.xlib.ioutils",
-      "czlab.test.xlib.metautils",
-      "czlab.test.xlib.procutils",
-      "czlab.test.xlib.strutils",
-      "czlab.test.xlib.win32ini"
+      "czlab.test.wabbit.cons.test"
     });
   }
 }
