@@ -6,116 +6,165 @@
 ;; the terms of this license.
 ;; You must not remove this notice, or any other, from this software.
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;(set! *warn-on-reflection* false)
 (ns ^{:doc ""
       :author "Kenneth Leung"}
 
   czlab.wabbit.cons.core
 
-  (:gen-class)
-
-  (:require [czlab.xlib.io :refer [dirRead?]]
+  (:require [czlab.xlib.resources :refer [rstr]]
             [czlab.xlib.logging :as log]
-            [clojure.java.io :as io]
-            [czlab.table.core :as tbl])
+            [clojure.string :as cs]
+            [clojure.java.io :as io])
 
-  (:use [czlab.wabbit.cons.con2]
-        [czlab.wabbit.etc.core]
-        [czlab.xlib.resources]
+  (:use [czlab.wabbit.common.core]
         [czlab.xlib.format]
         [czlab.xlib.core]
-        [czlab.xlib.str]
-        [czlab.xlib.consts]
-        [czlab.wabbit.cons.con1])
+        [czlab.xlib.io]
+        [czlab.xlib.str])
 
-  (:import [czlab.wabbit.cons CmdError]
-           [czlab.xlib I18N]
-           [java.io File]
-           [java.util ResourceBundle List Locale]))
+  (:import [org.apache.commons.lang3.text StrSubstitutor]
+           [org.apache.commons.io FileUtils]
+           [czlab.xlib
+            Versioned
+            Muble
+            I18N
+            Hierarchial
+            Identifiable]
+           [java.io IOException File]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;(set! *warn-on-reflection* true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn expandSysProps
+  "Expand any system properties found inside the string value"
+  ^String
+  [^String value]
+  (if (nichts? value)
+    value
+    (StrSubstitutor/replaceSystemProperties value)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn expandEnvVars
+  "Expand any env-vars found inside the string value"
+  ^String
+  [^String value]
+  (if (nichts? value)
+    value
+    (.replace (StrSubstitutor. (System/getenv)) value)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn expandVars
+  "Replaces all system & env variables in the value"
+  ^String
+  [^String value]
+  (if (nichts? value)
+    value
+    (-> (expandSysProps value)
+        (expandEnvVars ))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getCmdInfo
+(defn readConf
+  "Parse a edn configuration file"
+  {:tag String}
+  ([podDir confile]
+   (readConf (io/file podDir dn-conf confile)))
+  ([file]
+   (doto->>
+     (-> (io/file file)
+         (changeContent
+           #(-> (cs/replace %
+                            "${pod.dir}" "${wabbit.proc.dir}")
+                (expandVars ))))
+     (log/debug "[%s]\n%s" file))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;asserts that the directory is readable & writable.
+(defn ^:no-doc precondDir
+  "Assert folder(s) are read-writeable?"
+  [f & dirs]
+  (doseq [d (cons f dirs)]
+    (test-cond (rstr (I18N/base)
+                     "dir.no.rw" d)
+               (dirReadWrite? d)))
+  true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;asserts that the file is readable
+(defn ^:no-doc precondFile
+  "Assert file(s) are readable?"
+  [ff & files]
+  (doseq [f (cons ff files)]
+    (test-cond (rstr (I18N/base)
+                     "file.no.r" f)
+               (fileRead? f)))
+  true)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn ^:no-doc maybeDir
+  "If the key maps to a File"
+  ^File
+  [^Muble m kn]
+  (let [v (.getv m kn)]
+    (condp instance? v
+      String (io/file v)
+      File v
+      (trap! IOException (rstr (I18N/base)
+                               "wabbit.no.dir" kn)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn slurpXXXConf
+  "Parse config file"
+  ([podDir conf] (slurpXXXConf podDir conf false))
+  ([podDir conf expVars?]
+   (let [f (io/file podDir conf)
+         s (str "{\n"
+                (slurpUtf8 f) "\n}")]
+     (->
+       (if expVars?
+         (-> (cs/replace s
+                         "${pod.dir}"
+                         "${wabbit.proc.dir}")
+             (expandVars))
+         s)
+       (readEdn )))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn spitXXXConf
+  "Write out config file"
+  [podDir conf cfgObj]
+  (let [f (io/file podDir conf)
+        s (strim (writeEdnStr cfgObj))]
+    (->>
+      (if (and (.startsWith s "{")
+               (.endsWith s "}"))
+        (-> (drophead s 1)
+            (droptail 1))
+        s)
+      (spitUtf8 f))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn deleteDir
   ""
-  [rcb]
-  (partition
-    2
-    (rstr*
-      rcb
-      ["usage.new"] ["usage.new.desc"]
-      ["usage.svc"] ["usage.svc.desc"]
-      ["usage.podify"] ["usage.podify.desc"]
-      ["usage.ide"] [ "usage.ide.desc"]
-      ["usage.build"] [ "usage.build.desc"]
-      ["usage.test"] [ "usage.test.desc"]
+  [dir]
+  (try! (FileUtils/deleteDirectory (io/file dir))))
 
-      ["usage.debug"] ["usage.debug.desc"]
-      ["usage.start"] ["usage.start.desc"]
-
-      ["usage.gen"] [ "usage.gen.desc"]
-      ["usage.demo"] [ "usage.demo.desc"]
-      ["usage.version"] [ "usage.version.desc"]
-
-      ["usage.testjce"] ["usage.testjce.desc"]
-      ["usage.help"] ["usage.help.desc"])))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn usage
+(defn cleanDir
   ""
-  []
-  (let
-    [walls ["" "   " ""]
-     style {:middle ["" "" ""]
-            :bottom ["" "" ""]
-            :top ["" "" ""]
-            :dash " "
-            :header-walls walls
-            :body-walls walls}
-     rcb (I18N/base)]
-    (println (bannerText))
-    (printf "%s\n\n" (rstr rcb "wabbit.desc"))
-    (printf "%s\n" (rstr rcb "cmds.header"))
-    ;; prepend blanks to act as headers
-    (printf "%s\n\n"
-            (strim
-              (with-out-str
-                (-> (concat '(("" ""))
-                            (getCmdInfo rcb))
-                    (tbl/table :style style)))))
-    (printf "%s\n" (rstr rcb "cmds.trailer"))
-    (println)
-    ;;the table module causes some agent stuff to hang
-    ;;the vm without exiting, so shut them down
-    (shutdown-agents)))
+  [dir]
+  (try! (FileUtils/cleanDirectory (io/file dir))))
 
-(defn- xxx "" [x] (.getName x))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn -main
-  "Main Entry"
-  [& args]
-  (let
-    [ver (loadResource "czlab/wabbit/cons/version.properties")
-     rcb (getResource "czlab/wabbit/cons/Resources")
-     verStr (or (some-> ver (.getString "version")) "?")]
-    (sysProp! "wabbit.version" verStr)
-    (I18N/setBase rcb)
-    ;;(xxx (io/file "aaa"))
-    (try
-      (if (empty? args)(trap! CmdError))
-      (let [[f _]
-            (-> (keyword (first args))
-                (*wabbit-tasks* ))]
-        (if (fn? f)
-          (f (vec (drop 1 args)))
-          (trap! CmdError)))
-      (catch Throwable _
-        (if (instance? CmdError _) (usage) (prtStk _))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
 
 

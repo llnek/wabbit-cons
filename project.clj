@@ -8,24 +8,23 @@
   :description ""
   :url "https://github.com/llnek/wabbit-cons"
 
-  :dependencies [[io.czlab/wabbit "0.1.0"]]
+  :dependencies [[io.czlab/wabbit-common "0.1.0"]
+                 [io.czlab/wabbit "0.1.0"]]
 
   :plugins [[lein-codox "0.10.2"]
-            [lein-czlab "0.1.1"]
             [lein-pprint "1.1.2"]]
-  :hooks [leiningen.lein-czlab]
 
-  :main czlab.wabbit.cons.core
+  :main czlab.wabbit.cons.con8
 
   :profiles {:provided {:dependencies
                         [[net.mikera/cljunit "0.6.0" :scope "test"]
                          [junit/junit "4.12" :scope "test"]
                          [org.clojure/clojure "1.8.0" :scope "provided"]
                          [codox/codox "0.10.2" :scope "provided"]]}
-             :dev {:global-vars {*warn-on-reflection* true}}
              :run {:global-vars ^:replace {*warn-on-reflection* false}}
              :uberjar {:aot :all}}
 
+  :global-vars {*warn-on-reflection* true}
   :target-path "out/%s"
   :aot :all
   ;;:jar-exclusions [#"(?:^|/).svn/"]

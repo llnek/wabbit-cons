@@ -13,7 +13,6 @@
 
   (:require [czlab.twisty.codec :refer [strongPwd<> passwd<>]]
             [czlab.xlib.format :refer [writeEdnStr readEdn]]
-            [czlab.wabbit.sys.core :refer [startViaCons]]
             [czlab.twisty.core :refer [assertJce]]
             [czlab.xlib.resources :refer [rstr]]
             [czlab.xlib.logging :as log]
@@ -21,17 +20,18 @@
             [clojure.java.io :as io]
             [clojure.string :as cs])
 
-  (:use [czlab.wabbit.cons.con2]
+  (:use [czlab.wabbit.common.core]
+        [czlab.wabbit.common.svcs]
+        [czlab.wabbit.cons.core]
+        [czlab.wabbit.cons.con2]
         [czlab.xlib.guids]
         [czlab.xlib.core]
         [czlab.xlib.str]
         [czlab.xlib.io]
-        [czlab.xlib.meta]
-        [czlab.wabbit.svcs.core]
-        [czlab.wabbit.etc.core])
+        [czlab.xlib.meta])
 
   (:import [org.apache.commons.io FileUtils]
-           [czlab.wabbit.etc CmdError]
+           [czlab.wabbit.cons CmdError]
            [czlab.twisty IPassword]
            [java.util
             ResourceBundle
@@ -148,6 +148,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
+(defn- startViaCons "" [a b])
 (defn onStart
   "Start and run the pod"
   {:no-doc true}
@@ -397,7 +398,7 @@
       (if (< hint 0)
         (dissoc root id)
         (when-some
-          [gist (:conf ((emittersByService) svc))]
+          [gist (:conf (emitterByService svc))]
           (if (in? root id) (trap! CmdError))
           (assoc root id (assoc gist :service svc))))]
      (if (some? nw)
