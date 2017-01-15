@@ -8,8 +8,11 @@
   :description ""
   :url "https://github.com/llnek/wabbit-cons"
 
-  :dependencies [[io.czlab/wabbit-common "0.1.0"]
-                 [io.czlab/wabbit "0.1.0"]]
+  :dependencies [[org.apache.commons/commons-lang3 "3.5"]
+                 [commons-io/commons-io "2.5"]
+                 [io.czlab/wabbit-common "0.1.0"]
+                 [io.czlab/antclj "0.1.0"]
+                 [io.czlab/twisty "0.1.0"]]
 
   :plugins [[lein-codox "0.10.2"]
             [lein-pprint "1.1.2"]]
