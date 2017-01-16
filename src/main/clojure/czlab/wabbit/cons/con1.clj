@@ -20,9 +20,8 @@
             [clojure.java.io :as io]
             [clojure.string :as cs])
 
-  (:use [czlab.wabbit.common.core]
-        [czlab.wabbit.common.svcs]
-        [czlab.wabbit.cons.core]
+  (:use [czlab.wabbit.common.svcs]
+        [czlab.wabbit.base.core]
         [czlab.wabbit.cons.con2]
         [czlab.xlib.guids]
         [czlab.xlib.core]

@@ -18,8 +18,7 @@
             [clojure.string :as cs]
             [clojure.java.io :as io])
 
-  (:use [czlab.wabbit.common.core]
-        [czlab.wabbit.cons.core]
+  (:use [czlab.wabbit.base.core]
         [czlab.xlib.core]
         [czlab.xlib.io]
         [czlab.xlib.str])

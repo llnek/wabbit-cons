@@ -15,7 +15,7 @@
 
   (:gen-class)
 
-  (:require [czlab.wabbit.common.core :as wcc :refer :all]
+  (:require [czlab.wabbit.base.core :as bcc :refer :all]
             [czlab.xlib.io :refer [dirRead?]]
             [czlab.xlib.logging :as log]
             [clojure.java.io :as io]
@@ -99,8 +99,8 @@
   "Main Entry"
   [& args]
   (let
-    [ver (loadResource wcc/c-verprops)
-     rcb (getResource wcc/c-rcb)
+    [ver (loadResource bcc/c-verprops)
+     rcb (getResource bcc/c-rcb)
      verStr (or (some-> ver (.getString "version")) "?")]
     (sysProp! "wabbit.version" verStr)
     (I18N/setBase rcb)
