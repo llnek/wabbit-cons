@@ -8,7 +8,7 @@
   :description ""
   :url "https://github.com/llnek/wabbit-cons"
 
-  :dependencies [[io.czlab/wabbit-common "0.1.0"]
+  :dependencies [[io.czlab/wabbit-shared "0.1.0"]
                  [io.czlab/wabbit-base "0.1.0"]
                  [io.czlab/antclj "0.1.0"]
                  [io.czlab/twisty "0.1.0"]]
@@ -16,7 +16,7 @@
   :plugins [[lein-codox "0.10.2"]
             [lein-pprint "1.1.2"]]
 
-  :main czlab.wabbit.cons.con8
+  :main czlab.wabbit.cons.con7
 
   :profiles {:provided {:dependencies
                         [[net.mikera/cljunit "0.6.0" :scope "test"]

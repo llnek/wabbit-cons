@@ -11,7 +11,7 @@
 (ns ^{:doc ""
       :author "Kenneth Leung"}
 
-  czlab.wabbit.cons.con8
+  czlab.wabbit.cons.con7
 
   (:gen-class)
 
