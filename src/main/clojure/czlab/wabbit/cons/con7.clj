@@ -16,21 +16,21 @@
   (:gen-class)
 
   (:require [czlab.wabbit.base.core :as bcc :refer :all]
-            [czlab.xlib.io :refer [dirRead?]]
-            [czlab.xlib.logging :as log]
+            [czlab.basal.io :refer [dirRead?]]
+            [czlab.basal.logging :as log]
             [clojure.java.io :as io]
             [czlab.table.core :as tbl])
 
   (:use [czlab.wabbit.cons.con2]
-        [czlab.xlib.resources]
-        [czlab.xlib.format]
-        [czlab.xlib.core]
-        [czlab.xlib.str]
-        [czlab.xlib.consts]
+        [czlab.basal.resources]
+        [czlab.basal.format]
+        [czlab.basal.core]
+        [czlab.basal.str]
+        [czlab.basal.consts]
         [czlab.wabbit.cons.con1])
 
   (:import [czlab.wabbit.cons CmdError]
-           [czlab.xlib I18N]
+           [czlab.jasal I18N]
            [java.io File]
            [java.util ResourceBundle List Locale]))
 

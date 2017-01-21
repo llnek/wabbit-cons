@@ -12,10 +12,10 @@
   czlab.wabbit.cons.con1
 
   (:require [czlab.twisty.codec :refer [strongPwd<> passwd<>]]
-            [czlab.xlib.format :refer [writeEdnStr readEdn]]
+            [czlab.basal.format :refer [writeEdnStr readEdn]]
             [czlab.twisty.core :refer [assertJce]]
-            [czlab.xlib.resources :refer [rstr]]
-            [czlab.xlib.logging :as log]
+            [czlab.basal.resources :refer [rstr]]
+            [czlab.basal.logging :as log]
             [czlab.antclj.antlib :as a]
             [clojure.java.io :as io]
             [clojure.string :as cs])
@@ -23,11 +23,11 @@
   (:use [czlab.wabbit.shared.svcs]
         [czlab.wabbit.base.core]
         [czlab.wabbit.cons.con2]
-        [czlab.xlib.guids]
-        [czlab.xlib.core]
-        [czlab.xlib.str]
-        [czlab.xlib.io]
-        [czlab.xlib.meta])
+        [czlab.basal.guids]
+        [czlab.basal.core]
+        [czlab.basal.str]
+        [czlab.basal.io]
+        [czlab.basal.meta])
 
   (:import [org.apache.commons.io FileUtils]
            [czlab.wabbit.cons CmdError]
@@ -39,7 +39,7 @@
             Map
             Date]
            [java.io File]
-           [czlab.xlib I18N]))
+           [czlab.jasal I18N]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)

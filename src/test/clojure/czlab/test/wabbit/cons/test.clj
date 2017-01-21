@@ -20,6 +20,6 @@
 
   (is (string? "That's all folks!")))
 
-
-;;(clojure.test/run-tests 'czlab.test.wabbit.cons.test)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;EOF
 

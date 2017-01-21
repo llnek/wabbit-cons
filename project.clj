@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defproject io.czlab/wabbit-cons "0.1.0"
+(defproject io.czlab/wabbit-cons "1.0.0"
 
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
@@ -8,10 +8,10 @@
   :description ""
   :url "https://github.com/llnek/wabbit-cons"
 
-  :dependencies [[io.czlab/wabbit-shared "0.1.0"]
-                 [io.czlab/wabbit-base "0.1.0"]
-                 [io.czlab/antclj "0.1.0"]
-                 [io.czlab/twisty "0.1.0"]]
+  :dependencies [[io.czlab/wabbit-shared "1.0.0"]
+                 [io.czlab/wabbit-base "1.0.0"]
+                 [io.czlab/antclj "1.0.0"]
+                 [io.czlab/twisty "1.0.0"]]
 
   :plugins [[lein-codox "0.10.2"]
             [lein-pprint "1.1.2"]]
@@ -19,9 +19,9 @@
   :main czlab.wabbit.cons.con7
 
   :profiles {:provided {:dependencies
-                        [[net.mikera/cljunit "0.6.0" :scope "test"]
+                        [[org.clojure/clojure "1.8.0" :scope "provided"]
+                         [net.mikera/cljunit "0.6.0" :scope "test"]
                          [junit/junit "4.12" :scope "test"]
-                         [org.clojure/clojure "1.8.0" :scope "provided"]
                          [codox/codox "0.10.2" :scope "provided"]]}
              :run {:global-vars ^:replace {*warn-on-reflection* false}}
              :uberjar {:aot :all}}

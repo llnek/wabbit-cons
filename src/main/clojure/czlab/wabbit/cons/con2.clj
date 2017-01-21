@@ -11,17 +11,17 @@
 
   czlab.wabbit.cons.con2
 
-  (:require [czlab.xlib.format :refer [writeEdnStr readEdn]]
-            [czlab.xlib.guids :refer [uuid<>]]
-            [czlab.xlib.logging :as log]
+  (:require [czlab.basal.format :refer [writeEdnStr readEdn]]
+            [czlab.basal.guids :refer [uuid<>]]
+            [czlab.basal.logging :as log]
             [czlab.antclj.antlib :as a]
             [clojure.string :as cs]
             [clojure.java.io :as io])
 
   (:use [czlab.wabbit.base.core]
-        [czlab.xlib.core]
-        [czlab.xlib.io]
-        [czlab.xlib.str])
+        [czlab.basal.core]
+        [czlab.basal.io]
+        [czlab.basal.str])
 
   (:import [org.apache.commons.io.filefilter FileFilterUtils]
            [org.apache.commons.io FileUtils]
