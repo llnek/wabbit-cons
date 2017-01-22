@@ -20,8 +20,7 @@
             [clojure.java.io :as io]
             [clojure.string :as cs])
 
-  (:use [czlab.wabbit.shared.svcs]
-        [czlab.wabbit.base.core]
+  (:use [czlab.wabbit.base.core]
         [czlab.wabbit.cons.con2]
         [czlab.basal.guids]
         [czlab.basal.core]
@@ -397,7 +396,7 @@
       (if (< hint 0)
         (dissoc root id)
         (when-some
-          [gist (:conf (emitterByService svc))]
+          [gist (:conf {})];;(emitterByService svc))]
           (if (in? root id) (trap! CmdError))
           (assoc root id (assoc gist :service svc))))]
      (if (some? nw)
