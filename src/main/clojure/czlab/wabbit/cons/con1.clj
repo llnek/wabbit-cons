@@ -30,6 +30,7 @@
 
   (:import [org.apache.commons.io FileUtils]
            [czlab.wabbit.cons CmdError]
+           [czlab.wabbit.base Cljshim]
            [czlab.twisty IPassword]
            [java.util
             ResourceBundle
@@ -380,60 +381,42 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Service
+(defn- onHelp-ServiceSpecs
   "" [] (onHelpXXX "usage.svc.d" 8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onSvc
+(defn onServiceSpecs
   ""
-  ([id hint] (onSvc id hint nil))
-  ([id hint svc]
-   (let
-     [cf (slurpXXXConf (getProcDir) cfg-pod-cf)
-      root (:services cf)
-      nw
-      (if (< hint 0)
-        (dissoc root id)
-        (when-some
-          [gist (:conf {})];;(emitterByService svc))]
-          (if (in? root id) (trap! CmdError))
-          (assoc root id (assoc gist :service svc))))]
-     (if (some? nw)
-       (spitXXXConf (getProcDir) cfg-pod-cf nw)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn onService
-  ""
-  {:no-doc true}
   [args]
-  (if (< (count args) 2) (trap! CmdError))
   (let
-    [id (keyword (args 1))
-     cmd (args 0)
-     [hint svc]
-     (cond
-       (in? #{"-r" "--remove"} cmd)
-       [-1 "?"]
-       (in? #{"-a" "--add"} cmd)
-       (if (< (count args) 3)
-         (trap! CmdError)
-         [1 (args 2)])
-       :else (trap! CmdError))
-     t (case (keyword svc)
-         :repeat :czlab.wabbit.io.loops/RepeatingTimer
-         :files :czlab.wabbit.io.files/FilePicker
-         :once :czlab.wabbit.io.loops/OnceTimer
-         :tcp :czlab.wabbit.io.socket/Socket
-         :web :czlab.wabbit.io.http/WebMVC
-         :pop3 :czlab.wabbit.io.mails/POP3
-         :imap :czlab.wabbit.io.mails/IMAP
-         :http :czlab.wabbit.io.http/HTTP
-         :jms :czlab.wabbit.io.jms/JMS
-         :? nil
-         (trap! CmdError))]
-    (onSvc id hint t)))
+    [clj (Cljshim/newrt (getCldr) "clj")
+     pfx (strKW :czlab.wabbit.plugs.io)
+     specs
+     {:loops/RepeatingTimer :loops/RepeatingTimerSpec
+      :loops/OnceTimer :loops/OnceTimerSpec
+      :files/FilePicker :files/FilePickerSpec
+      :socket/SocketIO :socket/SocketIOSpec
+      :jms/JMS :jms/JMSSpec
+      :mails/POP3 :mails/POP3Spec
+      :mails/IMAP :mails/IMAPSpec
+      :http/WebMVC :http/WebMVCSpec
+      :http/HTTP :http/HTTPSpec}
+     rc
+     (preduce<map>
+       #(let
+          [[k s] %2
+           kee (keyword (str pfx "." (strKW k)))
+           spec (.call clj
+                       (str pfx "." (strKW s)))
+           spec (update-in spec
+                           [:conf]
+                           assoc
+                           :pluggable kee)]
+          (assoc! %1
+                  (keyword (name kee)) spec))
+       specs)]
+    (println (writeEdnStr rc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -458,7 +441,7 @@
 (def
   ^:dynamic
   *wabbit-tasks*
-  {:service [onService onHelp-Service]
+  {:service [onServiceSpecs onHelp-ServiceSpecs]
    :new [onCreate onHelp-Create]
    :ide [onIDE onHelp-IDE]
    :podify [onPodify onHelp-Podify]
