@@ -8,15 +8,126 @@
 
 (ns czlab.test.wabbit.cons.test
 
-  (:use [clojure.test])
+  (:require [czlab.basal.logging :as log]
+            [clojure.string :as cs]
+            [clojure.java.io :as io])
 
-  (:import [java.io File]))
+  (:use [czlab.wabbit.cons.con1]
+        [czlab.wabbit.cons.con2]
+        [czlab.wabbit.cons.con7]
+        [czlab.wabbit.base.core]
+        [czlab.basal.core]
+        [czlab.basal.io]
+        [czlab.basal.str]
+        [clojure.test])
+
+  (:import [czlab.wabbit.cons CmdError]
+           [java.io File ]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestwabbitcons-test
 
-  (is (== 1 1))
+  (is (= "hello"
+         (gtid (with-meta {:a 1} {:typeid "hello"}))))
+
+  (is (> (count (expandSysProps "${user.home}")) 0))
+  (is (> (count (expandEnvVars "${HOME}")) 0))
+  (is (= (str (expandSysProps "${user.home}")
+              (expandEnvVars "${HOME}"))
+         (expandVars "${user.home}${HOME}")))
+
+  (is (precondDir *tempfile-repo*))
+  (is (let [t (tempFile)
+            _ (spitUtf8 t "hello")
+            ok (precondFile t)]
+        (deleteQ t)
+        ok))
+
+  (is (let [m (muble<> {:s "hello.txt"
+                        :f (io/file "hello.txt")})]
+        (and (inst? File (maybeDir m :s))
+             (inst? File (maybeDir m :f)))))
+
+  (is (let [fp (fpath *tempfile-repo*)
+            _ (sysProp! "wabbit.user.dir" fp)
+            t (tempFile)
+            _ (spitUtf8 t "${pod.dir}")
+            s (readConf t)]
+        (deleteQ t)
+        (= s fp)))
+
+  (is (let [fp (fpath *tempfile-repo*)
+            tn (juid)
+            _ (spitXXXConf fp tn {:a 1})
+            m (slurpXXXConf fp tn)]
+        (deleteQ (io/file fp tn))
+        (and (== 1 (count m))
+             (== 1 (:a m)))))
+
+  (is (let [fp (fpath *tempfile-repo*)
+            _ (sysProp! "wabbit.user.dir" fp)
+            tn (juid)
+            _ (spitXXXConf fp tn {:a "${pod.dir}"})
+            m (slurpXXXConf fp tn true)]
+        (deleteQ (io/file fp tn))
+        (and (== 1 (count m))
+             (string? (:a m))
+             (> (count (:a m)) 0))))
+
+  (is (== 17 (-> (with-out-str
+                   (onGenerate ["--password" "17"] ))
+                 (trimr "\n")
+                 count)))
+  (is (== 13 (-> (with-out-str
+                   (onGenerate ["-p" "13"] ))
+                 (trimr "\n")
+                 count)))
+
+  (is (> (-> (with-out-str
+               (onGenerate ["--hash" "hello"]))
+             (trimr "\n")
+             count) 0))
+  (is (> (-> (with-out-str
+               (onGenerate ["-h" "hello"]))
+             (trimr "\n")
+             count) 0))
+
+  (is (> (-> (with-out-str
+               (onGenerate ["--uuid"]))
+             (trimr "\n")
+             count) 0))
+  (is (> (-> (with-out-str
+               (onGenerate ["-u"]))
+             (trimr "\n")
+             count) 0))
+
+  (is (> (-> (with-out-str
+               (onGenerate ["--wwid"]))
+             (trimr "\n")
+             count) 0))
+  (is (> (-> (with-out-str
+               (onGenerate ["-w"]))
+             (trimr "\n")
+             count) 0))
+
+  (is (let [e (-> (with-out-str
+                    (onGenerate ["--encrypt" "secret" "hello"]))
+                  (trimr "\n"))
+            d (-> (with-out-str
+                    (onGenerate ["--decrypt" "secret" e]))
+                  (trimr "\n"))]
+        (= d "hello")))
+
+  (is (let [e (-> (with-out-str
+                    (onGenerate ["-e" "secret" "hello"]))
+                  (trimr "\n"))
+            d (-> (with-out-str
+                    (onGenerate ["-d" "secret" e]))
+                  (trimr "\n"))]
+        (= d "hello")))
+
+  (is (thrown? CmdError (onGenerate ["-bbbbb"])))
 
   (is (string? "That's all folks!")))
 
