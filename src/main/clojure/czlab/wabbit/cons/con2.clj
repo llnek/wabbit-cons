@@ -15,6 +15,8 @@
             [czlab.basal.guids :refer [uuid<>]]
             [czlab.basal.logging :as log]
             [czlab.antclj.antlib :as a]
+            [czlab.wabbit.shared.new :as ws]
+            [stencil.core :as sc]
             [clojure.string :as cs]
             [clojure.java.io :as io])
 
@@ -144,26 +146,24 @@
 ;; Maybe create a new pod?
 (defn createPod
   "Create a new pod"
-  [option path]
-  (let
-    [rx #"^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z0-9_]+)*"
-     path (strimAny path ".")
-     t (re-matches rx path)
-     cwd (getProcDir)
-     kind
-     (case option
-       ("-w" "--web") :web
-       ("-s" "--soa") :soa
-       (trap! CmdError))
-     ;; treat as domain e.g com.acme => pod = acme
-     ;; regex gives ["com.acme" ".acme"]
-     pod (when (some? t)
-           (if-some [tkn (last t)]
-             (triml tkn ".")
-             (first t)))]
-    (if (empty? pod) (trap! CmdError))
-    (copyOnePod cwd pod path kind)
-    (configOnePod cwd pod path kind)))
+  [name & args]
+  (try
+    (println (format "Generating fresh 'wabbit' project."))
+    (let
+      [dir (second (drop-while #(not= "--to-dir" %) args))
+       options
+       {:renderer-fn sc/render-string
+        :force?
+        (some? (first (drop-while
+                        #(not= "--force" %) args)))
+        :dir (or dir
+                 (-> (getCwd)
+                     (io/file name) (.getPath)))}]
+      (println "opts = " options)
+      (apply ws/new<> name options args))
+    (catch Throwable t
+      (println "failed to generate project")
+      (println (.getMessage t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -11,6 +11,8 @@
   :dependencies [[io.czlab/wabbit-shared "1.0.0"]
                  [io.czlab/wabbit-base "1.0.0"]
                  [io.czlab/wabbit-plugs "1.0.0"]
+                 [io.aviso/pretty "0.1.33"]
+                 [stencil "0.5.0"]
                  [io.czlab/antclj "1.0.0"]
                  [io.czlab/twisty "1.0.0"]]
 

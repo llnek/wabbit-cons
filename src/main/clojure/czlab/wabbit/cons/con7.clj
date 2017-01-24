@@ -19,6 +19,7 @@
             [czlab.basal.io :refer [dirRead?]]
             [czlab.basal.logging :as log]
             [clojure.java.io :as io]
+            [io.aviso.ansi :as ansi]
             [czlab.table.core :as tbl])
 
   (:use [czlab.wabbit.cons.con2]
@@ -77,7 +78,7 @@
             :header-walls walls
             :body-walls walls}
      rcb (I18N/base)]
-    (println (bannerText))
+    (println (ansi/bold-yellow (bannerText)))
     (printf "%s\n\n" (rstr rcb "wabbit.desc"))
     (printf "%s\n" (rstr rcb "cmds.header"))
     ;; prepend blanks to act as headers

@@ -18,6 +18,7 @@
             [czlab.basal.logging :as log]
             [czlab.antclj.antlib :as a]
             [clojure.java.io :as io]
+            [io.aviso.ansi :as ansi]
             [clojure.string :as cs])
 
   (:use [czlab.wabbit.base.core]
@@ -82,8 +83,8 @@
   "Create a new pod"
   {:no-doc true}
   [args]
-  (if (> (count args) 1)
-    (createPod (args 0) (args 1))
+  (if (not-empty args)
+    (apply createPod (args 0) (drop 1 args))
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -160,7 +161,7 @@
              (isWindows?))
       (runPodBg home cwd)
       (do
-        (println (bannerText))
+        (println (ansi/bold-yellow (bannerText)))
         (startViaCons home cwd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -393,28 +394,22 @@
     [clj (Cljshim/newrt (getCldr) "clj")
      pfx (strKW :czlab.wabbit.plugs.io)
      specs
-     {:loops/RepeatingTimer :loops/RepeatingTimerSpec
-      :loops/OnceTimer :loops/OnceTimerSpec
-      :files/FilePicker :files/FilePickerSpec
-      :socket/SocketIO :socket/SocketIOSpec
-      :jms/JMS :jms/JMSSpec
-      :mails/POP3 :mails/POP3Spec
-      :mails/IMAP :mails/IMAPSpec
-      :http/WebMVC :http/WebMVCSpec
-      :http/HTTP :http/HTTPSpec}
+     {:RepeatingTimer :loops/RepeatingTimerSpec
+      :OnceTimer :loops/OnceTimerSpec
+      :FilePicker :files/FilePickerSpec
+      :SocketIO :socket/SocketIOSpec
+      :JMS :jms/JMSSpec
+      :POP3 :mails/POP3Spec
+      :IMAP :mails/IMAPSpec
+      :WebMVC :http/WebMVCSpec
+      :HTTP :http/HTTPSpec}
      rc
      (preduce<map>
        #(let
           [[k s] %2
-           kee (keyword (str pfx "." (strKW k)))
            spec (.call clj
-                       (str pfx "." (strKW s)))
-           spec (update-in spec
-                           [:conf]
-                           assoc
-                           :pluggable kee)]
-          (assoc! %1
-                  (keyword (name kee)) spec))
+                       (str pfx "." (strKW s)))]
+          (assoc! %1 k spec))
        specs)]
     (println (writeEdnStr rc))))
 
