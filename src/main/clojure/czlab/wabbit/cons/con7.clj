@@ -40,9 +40,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getCmdInfo
-  ""
-  [rcb]
+(defn- getCmdInfo "" [rcb]
+
   (partition
     2
     (rstr*
@@ -66,9 +65,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn usage
-  ""
-  []
+(defn usage "" []
+
   (let
     [walls ["" "   " ""]
      style {:middle ["" "" ""]
@@ -96,9 +94,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn -main
-  "Main Entry"
-  [& args]
+(defn -main "" [& args]
+
   (let
     [ver (loadResource bcc/c-verprops)
      rcb (getResource bcc/c-rcb)
@@ -109,7 +106,7 @@
       (if (empty? args)(trap! CmdError))
       (let [[f _]
             (-> (keyword (first args))
-                (*wabbit-tasks* ))]
+                *wabbit-tasks* )]
         (if (fn? f)
           (f (vec (drop 1 args)))
           (trap! CmdError)))

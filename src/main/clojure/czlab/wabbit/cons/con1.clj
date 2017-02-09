@@ -13,6 +13,7 @@
 
   (:require [czlab.twisty.codec :refer [strongPwd<> passwd<>]]
             [czlab.basal.format :refer [writeEdnStr readEdn]]
+            [czlab.wabbit.sys.core :refer [startViaCons]]
             [czlab.twisty.core :refer [assertJce]]
             [czlab.basal.resources :refer [rstr]]
             [czlab.basal.logging :as log]
@@ -42,6 +43,7 @@
            [java.io File]
            [czlab.jasal I18N]))
 
+(defn- getHomeDir [])
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,24 +60,22 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelpXXX
-  ""
-  [pfx end]
+(defn- onHelpXXX "" [pfx end]
+
   (let [rcb (I18N/base)]
     (dotimes [n end]
-      (printf "%s\n" (rstr rcb
-                           (str pfx (+ n 1)))))
+      (printf "%s\n"
+              (rstr rcb
+                    (str pfx (+ n 1)))))
     (println)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Create
-  "" [] (onHelpXXX "usage.new.d" 5))
+(defn- onHelp-Create "" [] (onHelpXXX "usage.new.d" 5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onCreate
-  "Create a new pod"
+(defn onCreate "Create a new pod"
   {:no-doc true}
   [args]
   (if (not-empty args)
@@ -84,14 +84,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Podify
-  "" [] (onHelpXXX "usage.podify.d" 2))
+(defn- onHelp-Podify "" [] (onHelpXXX "usage.podify.d" 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- bundlePod
-  "Bundle an app"
-  [homeDir podDir outDir]
+(defn- bundlePod "" [podDir outDir]
+
   (let [dir (mkdirs (io/file outDir))
         a (io/file podDir)]
     (->>
@@ -99,32 +97,28 @@
         {:destFile (io/file dir (str (.getName a) ".zip"))
          :basedir a
          :includes "**/*"})
-      (a/runTasks* ))))
+      a/runTasks* )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onPodify
-  "Package the pod"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (if-not (empty? args)
-    (bundlePod (getHomeDir)
-               (getProcDir) (args 0))
+    (bundlePod (getProcDir) (args 0))
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Start
-  "" [] (onHelpXXX "usage.start.d" 4))
+(defn- onHelp-Start "" [] (onHelpXXX "usage.start.d" 4))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- runPodBg
-  "Run the pod in the background"
-  [homeDir podDir]
+(defn- runPodBg "" [podDir]
+
   (let
-    [progW (io/file homeDir "bin/wabbit.bat")
-     prog (io/file homeDir "bin/wabbit")
+    [progW (io/file podDir "bin/wabbit.bat")
+     prog (io/file podDir "bin/wabbit")
      tk (if (isWindows?)
           (a/antExec
             {:executable "cmd.exe"
@@ -137,58 +131,49 @@
             {:executable (fpath prog)
              :dir podDir}
             [[:argvalues ["run" "bg"]]]))]
-    (if (some? tk)
-      (a/runTasks* tk)
-      (trap! CmdError))))
+    (if tk
+      (a/runTasks* tk) (trap! CmdError))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- startViaCons "" [a b])
 (defn onStart
-  "Start and run the pod"
-  {:no-doc true}
-  [args]
-  (let [home (getHomeDir)
-        cwd (getProcDir)
+  "" {:no-doc true} [args]
+
+  (let [cwd (getProcDir)
         s2 (first args)]
     ;; background job is handled differently on windows
     (if (and (in? #{"-bg" "--background"} s2)
              (isWindows?))
-      (runPodBg home cwd)
+      (runPodBg cwd)
       (do
         (println (ansi/bold-yellow (bannerText)))
-        (startViaCons home cwd)))))
+        (startViaCons cwd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Debug
-  "" [] (onHelpXXX "usage.debug.d" 2))
+(defn- onHelp-Debug "" [] (onHelpXXX "usage.debug.d" 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onDebug
-  "Debug the pod" {:no-doc true} [args] (onStart args))
+(defn onDebug "Debug the pod" {:no-doc true} [args] (onStart args))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Demos
-  "" [] (onHelpXXX "usage.demo.d" 2))
+(defn- onHelp-Demos "" [] (onHelpXXX "usage.demo.d" 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onDemos
-  "Generate demo apps"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (if-not (empty? args)
     (publishSamples (args 0))
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genPwd
-  ""
-  [args]
+(defn- genPwd "" [args]
+
   (let [c (first args)
         n (convLong (str c) 16)]
     (if (and (>= n 8)
@@ -206,49 +191,47 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHash
-  "Generate a hash"
-  [args]
+(defn- onHash "" [args]
+
   (if-not (empty? args)
-    (->> (passwd<> (first args))
-         (.hashed)
-         (:hash )
-         (println))
+    (->> (first args)
+         passwd<>
+         .hashed
+         :hash
+         println)
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onEncrypt
-  "Encrypt the data"
-  [args]
+(defn- onEncrypt "" [args]
+
   (if (> (count args) 1)
-    (->> (passwd<> (args 1) (args 0))
-         (.encoded)
-         (println))
+    (->> (passwd<> (args 1)
+                   (args 0))
+         .encoded
+         println)
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onDecrypt
-  "Decrypt the cypher"
-  [args]
+(defn- onDecrypt "" [args]
+
   (if (> (count args) 1)
-    (->> (passwd<> (args 1) (args 0))
-         (.text )
-         (println ))
+    (->> (passwd<> (args 1)
+                   (args 0))
+         .text
+         println )
     (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Generate
-  "" [] (onHelpXXX "usage.gen.d" 8))
+(defn- onHelp-Generate "" [] (onHelpXXX "usage.gen.d" 8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onGenerate
-  "Generate a bunch of crypto stuff"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (let [c (first args)
         args (vec (drop 1 args))]
     (cond
@@ -268,30 +251,26 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-TestJCE
-  "" [] (onHelpXXX "usage.testjce.d" 2))
+(defn- onHelp-TestJCE "" [] (onHelpXXX "usage.testjce.d" 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onTestJCE
-  "Test if JCE (crypto) is ok"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (let [rcb (I18N/base)]
     (assertJce)
     (println (rstr rcb "usage.testjce.ok"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Version
-  "" [] (onHelpXXX "usage.version.d" 2))
+(defn- onHelp-Version "" [] (onHelpXXX "usage.version.d" 2))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onVersion
-  "Show the version of system"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (let [rcb (I18N/base)]
     (->> (sysProp "wabbit.version")
          (rstr rcb "usage.version.o1")
@@ -303,9 +282,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- scanJars
-  ""
-  [^StringBuilder out ^File dir]
+(defn- scanJars "" [out dir]
+
   (let [sep (sysProp "line.separator")]
     (reduce
       (fn [^StringBuilder b f]
@@ -319,9 +297,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genEclipseProj
-  ""
-  [pdir]
+(defn- genEclipseProj "" [pdir]
+
   (let [ec (io/file pdir "eclipse.projfiles")
         poddir (io/file pdir)
         pod (.getName poddir)
@@ -361,15 +338,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-IDE
-  "" [] (onHelpXXX "usage.ide.d" 4))
+(defn- onHelp-IDE "" [] (onHelpXXX "usage.ide.d" 4))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onIDE
-  "Generate IDE project files"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (if (and (not-empty args)
            (in? #{"-e" "--eclipse"} (args 0)))
     (genEclipseProj (getProcDir))
@@ -377,14 +352,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-ServiceSpecs
-  "" [] (onHelpXXX "usage.svc.d" 8))
+(defn- onHelp-ServiceSpecs "" [] (onHelpXXX "usage.svc.d" 8))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onServiceSpecs
-  ""
-  [args]
+(defn onServiceSpecs "" [args]
+
   (let
     [clj (Cljshim/newrt (getCldr) "clj")
      pfx (strKW :czlab.wabbit.plugs.io)
@@ -416,9 +389,8 @@
 ;;
 (declare getTasks)
 (defn onHelp
-  "Show help"
-  {:no-doc true}
-  [args]
+  "" {:no-doc true} [args]
+
   (let
     [c (keyword (first args))
      [_ h] ((getTasks) c)]

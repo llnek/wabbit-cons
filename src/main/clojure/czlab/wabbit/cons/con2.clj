@@ -34,6 +34,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 
+(defn- getHomeDir [])
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defmacro mkDemoPath "" [dn] `(str "czlab.wabbit.demo." ~dn))
@@ -45,9 +47,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- mkcljd
-  ""
-  {:tag File}
-  ([podDir podDomain] (mkcljd podDir podDomain nil))
+  "" {:tag File}
+
+  ([podDir podDomain]
+   (mkcljd podDir podDomain nil))
+
   ([podDir podDomain dir]
    (io/file podDir
             "src/main"
@@ -58,8 +62,8 @@
 ;;
 (defn- fragPlugin
   ""
-  ^String
-  [kind]
+  ^String [kind]
+
   (if (= :web kind)
     ":auth \"czlab.wabbit.pugs.auth.core/pluginFactory<>\""
     ""))
@@ -67,8 +71,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- postCopyPod
-  ""
-  [podDir podId podDomain kind]
+  "" [podDir podId podDomain kind]
+
   (let
     [h2db (str (if (isWindows?)
                  "/c:/temp/" "/tmp/") (juid))
@@ -104,8 +108,8 @@
       (FileFilterUtils/trueFileFilter))
     (when (= :soa kind)
       (doall
-        (map #(->> (io/file podDir %)
-                   (FileUtils/deleteDirectory ))
+        (map #(-> (io/file podDir %)
+                  FileUtils/deleteDirectory )
              ["src/web" "public" "ext"])))
     (doall
       (map #(mkdirs (io/file podDir
@@ -124,8 +128,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- configOnePod
-  ""
-  [outDir podId podDomain kind]
+  "" [outDir podId podDomain kind]
+
   (let
     [domPath (cs/replace podDomain "." "/")
      podDir (io/file outDir podId)
@@ -143,10 +147,9 @@
              (cs/replace "@@TYPE@@" (name kind)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Maybe create a new pod?
-(defn createPod
-  "Create a new pod"
-  [name & args]
+;;
+(defn createPod "" [name & args]
+
   (try
     (println (format "Generating fresh 'wabbit' project."))
     (let
@@ -158,8 +161,8 @@
                         #(not= "--force" %) args)))
         :dir (or dir
                  (-> (getCwd)
-                     (io/file name) (.getPath)))}]
-      (println "opts = " options)
+                     (io/file name) .getPath))}]
+      ;;(println "opts = " options)
       (apply ws/new<> name options args))
     (catch Throwable t
       (println "failed to generate project")
@@ -167,9 +170,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genOneCljDemo
-  ""
-  [^File demo out]
+(defn- genOneCljDemo "" [^File demo out]
+
   (let
     [top (io/file out (.getName demo))
      dn (.getName top)
@@ -192,24 +194,20 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genCljDemos
-  ""
-  [outDir]
+(defn- genCljDemos "" [outDir]
+
   (let
-    [dss (->> (io/file (getHomeDir)
+    [dss (-> (io/file (getProcDir)
                        "src/main/clojure"
                        "czlab/wabbit/demo")
-              (.listFiles ))]
+             .listFiles )]
     (doseq [d dss
             :when (dirRead? d)]
       (genOneCljDemo d outDir))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn publishSamples
-  "Unzip all samples"
-  [outDir]
-  (genCljDemos (mkdirs outDir)))
+(defn publishSamples "" [outDir] (genCljDemos (mkdirs outDir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
