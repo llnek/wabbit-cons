@@ -27,7 +27,6 @@
         [czlab.basal.format]
         [czlab.basal.core]
         [czlab.basal.str]
-        [czlab.basal.consts]
         [czlab.wabbit.cons.con1])
 
   (:import [czlab.wabbit.cons CmdError]
@@ -76,18 +75,18 @@
             :header-walls walls
             :body-walls walls}
      rcb (I18N/base)]
-    (println (ansi/bold-yellow (bannerText)))
-    (printf "%s\n\n" (rstr rcb "wabbit.desc"))
-    (printf "%s\n" (rstr rcb "cmds.header"))
+    (prn!! (ansi/bold-yellow (bannerText)))
+    (prn! "%s\n\n" (rstr rcb "wabbit.desc"))
+    (prn! "%s\n" (rstr rcb "cmds.header"))
     ;; prepend blanks to act as headers
-    (printf "%s\n\n"
-            (strim
-              (with-out-str
-                (-> (concat '(("" ""))
-                            (getCmdInfo rcb))
-                    (tbl/table :style style)))))
-    (printf "%s\n" (rstr rcb "cmds.trailer"))
-    (println)
+    (prn! "%s\n\n"
+          (strim
+            (with-out-str
+              (-> (concat '(("" ""))
+                          (getCmdInfo rcb))
+                  (tbl/table :style style)))))
+    (prn! "%s\n" (rstr rcb "cmds.trailer"))
+    (prn!! "")
     ;;the table module causes some agent stuff to hang
     ;;the vm without exiting, so shut them down
     (shutdown-agents)))
@@ -96,10 +95,9 @@
 ;;
 (defn -main "" [& args]
 
-  (let
-    [ver (loadResource bcc/c-verprops)
-     rcb (getResource bcc/c-rcb)
-     verStr (or (some-> ver (.getString "version")) "?")]
+  (let [ver (loadResource bcc/c-verprops)
+        rcb (getResource bcc/c-rcb)
+        verStr (or (some-> ver (.getString "version")) "?")]
     (sysProp! "wabbit.version" verStr)
     (I18N/setBase rcb)
     (try
@@ -111,7 +109,7 @@
           (f (vec (drop 1 args)))
           (trap! CmdError)))
       (catch Throwable _
-        (if (inst? CmdError _) (usage) (prtStk _))))))
+        (if (ist? CmdError _) (usage) (prtStk _))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

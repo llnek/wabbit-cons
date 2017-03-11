@@ -11,11 +11,8 @@
 
   czlab.wabbit.cons.con2
 
-  (:require [czlab.basal.format :refer [writeEdnStr readEdn]]
-            [czlab.basal.guids :refer [uuid<>]]
+  (:require [czlab.wabbit.shared.new :as ws]
             [czlab.basal.logging :as log]
-            [czlab.antclj.antlib :as a]
-            [czlab.wabbit.shared.new :as ws]
             [stencil.core :as sc]
             [clojure.string :as cs]
             [clojure.java.io :as io])
@@ -25,133 +22,19 @@
         [czlab.basal.io]
         [czlab.basal.str])
 
-  (:import [org.apache.commons.io.filefilter FileFilterUtils]
-           [org.apache.commons.io FileUtils]
-           [java.util ResourceBundle UUID]
-           [czlab.wabbit.cons CmdError]
+  (:import [czlab.wabbit.cons CmdError]
            [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
-
-(defn- getHomeDir [])
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defmacro mkDemoPath "" [dn] `(str "czlab.wabbit.demo." ~dn))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- mkcljfp "" ^File [cljd fname] (io/file cljd fname))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- mkcljd
-  "" {:tag File}
-
-  ([podDir podDomain]
-   (mkcljd podDir podDomain nil))
-
-  ([podDir podDomain dir]
-   (io/file podDir
-            "src/main"
-            (stror dir "clojure")
-            (cs/replace podDomain "." "/"))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- fragPlugin
-  ""
-  ^String [kind]
-
-  (if (= :web kind)
-    ":auth \"czlab.wabbit.pugs.auth.core/pluginFactory<>\""
-    ""))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- postCopyPod
-  "" [podDir podId podDomain kind]
-
-  (let
-    [h2db (str (if (isWindows?)
-                 "/c:/temp/" "/tmp/") (juid))
-     h2dbUrl (str h2db
-                  "/"
-                  podId
-                  ";MVCC=TRUE;AUTO_RECONNECT=TRUE")
-     p (fragPlugin kind)
-     se ""]
-    (mkdirs h2db)
-    (replaceFile!
-      (io/file podDir cfg-pod-cf)
-      #(-> (cs/replace % "@@SAMPLE-EMITTER@@" se)
-           (cs/replace "@@AUTH-PLUGIN@@" p)
-           (cs/replace "@@H2DBPATH@@" h2dbUrl)))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- copyOnePod
-  ""
-  [outDir podId podDomain kind]
-  (let
-    [domPath (cs/replace podDomain "." "/")
-     podDir (mkdirs (io/file outDir podId))
-     other (if (= :soa kind) :web :soa)
-     srcDir (io/file podDir "src")
-     mcloj "main/clojure"
-     mjava "main/java"
-     hhh (getHomeDir)]
-    (FileUtils/copyDirectory
-      (io/file hhh dn-etc "app")
-      podDir
-      (FileFilterUtils/trueFileFilter))
-    (when (= :soa kind)
-      (doall
-        (map #(-> (io/file podDir %)
-                  FileUtils/deleteDirectory )
-             ["src/web" "public" "ext"])))
-    (doall
-      (map #(mkdirs (io/file podDir
-                             "src/main" % domPath))
-           ["clojure" "java"]))
-    (FileUtils/moveFile
-      (io/file srcDir mcloj (str (name kind) ".clj"))
-      (io/file srcDir mcloj domPath "core.clj"))
-    (FileUtils/deleteQuietly
-      (io/file srcDir mcloj (str (name other) ".clj")))
-    (FileUtils/moveToDirectory
-      (io/file srcDir mjava "HelloWorld.java")
-      (io/file srcDir mjava domPath) true)
-    (postCopyPod podDir podId podDomain kind)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- configOnePod
-  "" [outDir podId podDomain kind]
-
-  (let
-    [domPath (cs/replace podDomain "." "/")
-     podDir (io/file outDir podId)
-     srcDir (io/file podDir "src")
-     verStr "0.1.0-SNAPSHOT"
-     hhh (getHomeDir)]
-    (doseq [f (FileUtils/listFiles podDir nil true)]
-      (replaceFile!
-        f
-        #(-> (cs/replace % "@@USER@@" (getUser))
-             (cs/replace "@@APPDOMAIN@@" podDomain)
-             (cs/replace "@@APPKEY@@" (uuid<>))
-             (cs/replace "@@VER@@" verStr)
-             (cs/replace "@@APPID@@" podId)
-             (cs/replace "@@TYPE@@" (name kind)))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;;simulate what lein new template does
 (defn createPod "" [name & args]
 
+  (prn!! "Generating fresh 'wabbit' project.")
   (try
-    (println (format "Generating fresh 'wabbit' project."))
     (let
       [dir (second (drop-while #(not= "--to-dir" %) args))
        options
@@ -162,52 +45,15 @@
         :dir (or dir
                  (-> (getCwd)
                      (io/file name) .getPath))}]
-      ;;(println "opts = " options)
+      ;;(prn!! "opts = " options)
       (apply ws/new<> name options args))
     (catch Throwable t
-      (println "failed to generate project")
-      (println (.getMessage t)))))
+      (prn!! "failed to generate project")
+      (prn!! (.getMessage t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genOneCljDemo "" [^File demo out]
-
-  (let
-    [top (io/file out (.getName demo))
-     dn (.getName top)
-     podDomain (mkDemoPath dn)
-     domPath (cs/replace podDomain "." "/")
-     kind (if (in? #{"mvc" "http"} dn) :web :soa)]
-    (prn!! "Generating: %s..." podDomain)
-    (copyOnePod out dn podDomain kind)
-    (FileUtils/copyDirectory
-      demo
-      (io/file top dn-conf)
-      (FileFilterUtils/suffixFileFilter ".conf"))
-    (FileUtils/copyDirectory
-      demo
-      (io/file top "src/main/clojure" domPath)
-      (FileFilterUtils/suffixFileFilter ".clj"))
-    (configOnePod out
-                  dn
-                  podDomain kind)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- genCljDemos "" [outDir]
-
-  (let
-    [dss (-> (io/file (getProcDir)
-                       "src/main/clojure"
-                       "czlab/wabbit/demo")
-             .listFiles )]
-    (doseq [d dss
-            :when (dirRead? d)]
-      (genOneCljDemo d outDir))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn publishSamples "" [outDir] (genCljDemos (mkdirs outDir)))
+(defn publishSamples "" [outDir] )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

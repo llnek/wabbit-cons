@@ -11,7 +11,7 @@
 
   czlab.wabbit.cons.con1
 
-  (:require [czlab.twisty.codec :refer [strongPwd<> passwd<>]]
+  (:require [czlab.twisty.codec :refer [strongPasswd<> passwd<>]]
             [czlab.basal.format :refer [writeEdnStr readEdn]]
             [czlab.wabbit.sys.core :refer [startViaCons]]
             [czlab.twisty.core :refer [assertJce]]
@@ -43,16 +43,16 @@
            [java.io File]
            [czlab.jasal I18N]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;dummy
 (defn- getHomeDir [])
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn bannerText
-  ""
-  {:no-doc true
-   :tag String}
-  []
+  "" {:no-doc true
+      :tag String} []
   (str  "              __   __   _ __ " "\n"
         " _    _____ _/ /  / /  (_) /_" "\n"
         "| |/|/ / _ `/ _ \\/ _ \\/ / __/" "\n"
@@ -61,13 +61,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onHelpXXX "" [pfx end]
-
   (let [rcb (I18N/base)]
     (dotimes [n end]
-      (printf "%s\n"
-              (rstr rcb
-                    (str pfx (+ n 1)))))
-    (println)))
+      (prn! "%s\n" (rstr rcb (str pfx (inc n))))) (println)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -75,12 +71,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onCreate "Create a new pod"
-  {:no-doc true}
-  [args]
+(defn onCreate
+  "Create a new pod"
+  {:no-doc true} [args]
   (if (not-empty args)
-    (apply createPod (args 0) (drop 1 args))
-    (trap! CmdError)))
+    (apply createPod (args 0) (drop 1 args)) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -92,12 +87,11 @@
 
   (let [dir (mkdirs (io/file outDir))
         a (io/file podDir)]
-    (->>
+    (a/runTasks*
       (a/antZip
         {:destFile (io/file dir (str (.getName a) ".zip"))
          :basedir a
-         :includes "**/*"})
-      a/runTasks* )))
+         :includes "**/*"}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -105,8 +99,7 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (bundlePod (getProcDir) (args 0))
-    (trap! CmdError)))
+    (bundlePod (getProcDir) (args 0)) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -146,7 +139,7 @@
              (isWindows?))
       (runPodBg cwd)
       (do
-        (println (ansi/bold-yellow (bannerText)))
+        (prn!! (ansi/bold-yellow (bannerText)))
         (startViaCons cwd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -167,8 +160,7 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (publishSamples (args 0))
-    (trap! CmdError)))
+    (publishSamples (args 0)) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -177,9 +169,8 @@
   (let [c (first args)
         n (convLong (str c) 16)]
     (if (and (>= n 8)
-             (<= n 32))
-      (println (.text (strongPwd<> n)))
-      (trap! CmdError))))
+             (<= n 48))
+      (prn!! (.text (strongPasswd<> n))) (trap! CmdError))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -194,12 +185,7 @@
 (defn- onHash "" [args]
 
   (if-not (empty? args)
-    (->> (first args)
-         passwd<>
-         .hashed
-         :hash
-         println)
-    (trap! CmdError)))
+    (-> (first args) passwd<> .hashed :hash prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -207,10 +193,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (args 0))
-         .encoded
-         println)
-    (trap! CmdError)))
+                   (.toCharArray (str (args 0)))) .encoded prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -218,10 +201,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (args 0))
-         .text
-         println )
-    (trap! CmdError)))
+                   (.toCharArray (str (args 0)))) .text prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -235,17 +215,17 @@
   (let [c (first args)
         args (vec (drop 1 args))]
     (cond
-      (contains? #{"-p" "--password"} c)
+      (in? #{"-p" "--password"} c)
       (genPwd args)
-      (contains? #{"-h" "--hash"} c)
+      (in? #{"-h" "--hash"} c)
       (onHash args)
-      (contains? #{"-u" "--uuid"} c)
+      (in? #{"-u" "--uuid"} c)
       (genGuid)
-      (contains? #{"-w" "--wwid"} c)
+      (in? #{"-w" "--wwid"} c)
       (genWwid)
-      (contains? #{"-e" "--encrypt"} c)
+      (in? #{"-e" "--encrypt"} c)
       (onEncrypt args)
-      (contains? #{"-d" "--decrypt"} c)
+      (in? #{"-d" "--decrypt"} c)
       (onDecrypt args)
       :else (trap! CmdError))))
 
@@ -260,7 +240,7 @@
 
   (let [rcb (I18N/base)]
     (assertJce)
-    (println (rstr rcb "usage.testjce.ok"))))
+    (prn!! (rstr rcb "usage.testjce.ok"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -274,11 +254,11 @@
   (let [rcb (I18N/base)]
     (->> (sysProp "wabbit.version")
          (rstr rcb "usage.version.o1")
-         (printf "%s\n" ))
+         (prn! "%s\n" ))
     (->> (sysProp "java.version")
          (rstr rcb "usage.version.o2")
-         (printf "%s\n" ))
-    (println)))
+         (prn! "%s\n" ))
+    (prn!! "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -293,7 +273,7 @@
                        " path=\"" (fpath f) "\"/>"))
          (.append b sep))
       out
-      (listFiles dir "jar"))))
+      (listFiles dir ".jar"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -369,7 +349,6 @@
       :JMS :jms/JMSSpec
       :POP3 :mails/POP3Spec
       :IMAP :mails/IMAPSpec
-      :WebMVC :http/WebMVCSpec
       :HTTP :http/HTTPSpec}
      rc
      (preduce<map>
@@ -379,7 +358,7 @@
                        (str pfx "." (strKW s)))]
           (assoc! %1 k spec))
        specs)]
-    (println (writeEdnStr rc))))
+    (prn!! (writeEdnStr rc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -391,12 +370,9 @@
 (defn onHelp
   "" {:no-doc true} [args]
 
-  (let
-    [c (keyword (first args))
-     [_ h] ((getTasks) c)]
-    (if (fn? h)
-      (h)
-      (trap! CmdError))))
+  (let [c (keyword (first args))
+        [_ h] ((getTasks) c)]
+    (if (fn? h) (h) (trap! CmdError))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

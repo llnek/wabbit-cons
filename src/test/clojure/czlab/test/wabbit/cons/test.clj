@@ -46,8 +46,8 @@
 
   (is (let [m (muble<> {:s "hello.txt"
                         :f (io/file "hello.txt")})]
-        (and (inst? File (maybeDir m :s))
-             (inst? File (maybeDir m :f)))))
+        (and (ist? File (maybeDir m :s))
+             (ist? File (maybeDir m :f)))))
 
   (is (let [fp (fpath *tempfile-repo*)
             _ (sysProp! "wabbit.user.dir" fp)
@@ -58,7 +58,7 @@
         (= s fp)))
 
   (is (let [fp (fpath *tempfile-repo*)
-            tn (juid)
+            tn (jid<>)
             _ (spitXXXConf fp tn {:a 1})
             m (slurpXXXConf fp tn)]
         (deleteQ (io/file fp tn))
@@ -67,7 +67,7 @@
 
   (is (let [fp (fpath *tempfile-repo*)
             _ (sysProp! "wabbit.user.dir" fp)
-            tn (juid)
+            tn (jid<>)
             _ (spitXXXConf fp tn {:a "${pod.dir}"})
             m (slurpXXXConf fp tn true)]
         (deleteQ (io/file fp tn))
