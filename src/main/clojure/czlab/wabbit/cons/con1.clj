@@ -87,8 +87,8 @@
 
   (let [dir (mkdirs (io/file outDir))
         a (io/file podDir)]
-    (a/runTasks*
-      (a/antZip
+    (a/run*
+      (a/zip
         {:destFile (io/file dir (str (.getName a) ".zip"))
          :basedir a
          :includes "**/*"}))))
@@ -113,19 +113,19 @@
     [progW (io/file podDir "bin/wabbit.bat")
      prog (io/file podDir "bin/wabbit")
      tk (if (isWindows?)
-          (a/antExec
+          (a/exec
             {:executable "cmd.exe"
              :dir podDir}
             [[:argvalues ["/C" "start" "/B"
                           "/MIN"
                           (fpath progW) "run"]]]))
      _ (if false
-          (a/antExec
+          (a/exec
             {:executable (fpath prog)
              :dir podDir}
             [[:argvalues ["run" "bg"]]]))]
     (if tk
-      (a/runTasks* tk) (trap! CmdError))))
+      (a/run* tk) (trap! CmdError))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
