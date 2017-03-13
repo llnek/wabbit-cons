@@ -185,7 +185,7 @@
 (defn- onHash "" [args]
 
   (if-not (empty? args)
-    (-> (first args) passwd<> .hashed :hash prn!!) (trap! CmdError)))
+    (-> (first args) passwd<> .hashed prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
