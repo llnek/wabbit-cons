@@ -32,7 +32,7 @@
 
   (:import [org.apache.commons.io FileUtils]
            [czlab.wabbit.cons CmdError]
-           [czlab.wabbit.base Cljshim]
+           [czlab.basal Cljrt]
            [czlab.twisty IPassword]
            [java.util
             ResourceBundle
@@ -193,7 +193,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (.toCharArray (str (args 0)))) .encoded prn!!) (trap! CmdError)))
+                   (args 0)) .encoded prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -201,7 +201,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (.toCharArray (str (args 0)))) .text prn!!) (trap! CmdError)))
+                   (args 0)) .toString prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -339,7 +339,7 @@
 (defn onServiceSpecs "" [args]
 
   (let
-    [clj (Cljshim/newrt (getCldr) "clj")
+    [clj (Cljrt/newrt (getCldr) "clj")
      pfx (strKW :czlab.wabbit.plugs.io)
      specs
      {:RepeatingTimer :loops/RepeatingTimerSpec
