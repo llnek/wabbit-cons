@@ -170,7 +170,7 @@
         n (convLong (str c) 16)]
     (if (and (>= n 8)
              (<= n 48))
-      (prn!! (.text (strongPasswd<> n))) (trap! CmdError))))
+      (prn!! (strit (strongPasswd<> n))) (trap! CmdError))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -193,7 +193,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (args 0)) .encoded prn!!) (trap! CmdError)))
+                   (args 0)) .encoded strit prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -201,7 +201,7 @@
 
   (if (> (count args) 1)
     (->> (passwd<> (args 1)
-                   (args 0)) .toString prn!!) (trap! CmdError)))
+                   (args 0)) strit prn!!) (trap! CmdError)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
