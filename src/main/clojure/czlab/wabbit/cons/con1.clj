@@ -11,19 +11,19 @@
 
   czlab.wabbit.cons.con1
 
-  (:require [czlab.twisty.codec :refer [strongPasswd<> passwd<>]]
-            [czlab.basal.format :refer [writeEdnStr readEdn]]
-            [czlab.wabbit.sys.core :refer [startViaCons]]
+  (:require [czlab.basal.format :refer [writeEdnStr readEdn]]
+            [czlab.wabbit.core :refer [startViaCons]]
             [czlab.twisty.core :refer [assertJce]]
             [czlab.basal.resources :refer [rstr]]
+            [czlab.twisty.codec :refer :all]
             [czlab.basal.logging :as log]
             [czlab.antclj.antlib :as a]
             [clojure.java.io :as io]
             [io.aviso.ansi :as ansi]
             [clojure.string :as cs])
 
-  (:use [czlab.wabbit.base.core]
-        [czlab.wabbit.cons.con2]
+  (:use [czlab.wabbit.cons.con2]
+        [czlab.wabbit.base]
         [czlab.basal.guids]
         [czlab.basal.core]
         [czlab.basal.str]
@@ -31,9 +31,7 @@
         [czlab.basal.meta])
 
   (:import [org.apache.commons.io FileUtils]
-           [czlab.wabbit.cons CmdError]
            [czlab.basal Cljrt]
-           [czlab.twisty IPassword]
            [java.util
             ResourceBundle
             Properties
@@ -75,7 +73,9 @@
   "Create a new pod"
   {:no-doc true} [args]
   (if (not-empty args)
-    (apply createPod (args 0) (drop 1 args)) (trap! CmdError)))
+    (apply createPod
+           (args 0)
+           (drop 1 args)) (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -99,7 +99,8 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (bundlePod (getProcDir) (args 0)) (trap! CmdError)))
+    (bundlePod (getProcDir) (args 0))
+    (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -125,7 +126,7 @@
              :dir podDir}
             [[:argvalues ["run" "bg"]]]))]
     (if tk
-      (a/run* tk) (trap! CmdError))))
+      (a/run* tk) (throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -160,48 +161,51 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (publishSamples (args 0)) (trap! CmdError)))
+    (publishSamples (args 0)) (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genPwd "" [args]
+(defn genPwd "" [args]
 
   (let [c (first args)
         n (convLong (str c) 16)]
     (if (and (>= n 8)
              (<= n 48))
-      (prn!! (strit (strongPasswd<> n))) (trap! CmdError))))
+      (-> (strongPwd<> n) p-text strit) (throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genWwid "" [] (println (wwid<>)))
+(defn genWwid "" [] (wwid<>))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- genGuid "" [] (println (uuid<>)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-(defn- onHash "" [args]
-
-  (if-not (empty? args)
-    (-> (first args) passwd<> .hashed prn!!) (trap! CmdError)))
+(defn genGuid "" [] (uuid<>))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onEncrypt "" [args]
 
   (if (> (count args) 1)
-    (->> (passwd<> (args 1)
-                   (args 0)) .encoded strit prn!!) (trap! CmdError)))
+    (->> (pwd<> (args 1)
+                (args 0)) p-encoded strit )
+    (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onDecrypt "" [args]
 
   (if (> (count args) 1)
-    (->> (passwd<> (args 1)
-                   (args 0)) strit prn!!) (trap! CmdError)))
+    (->> (pwd<> (args 1)
+                (args 0)) p-text strit )
+    (throwBadData "CmdError")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- onHash "" [args]
+
+  (if-not (empty? args)
+    (-> (hashed (pwd<> (first args)))  )
+    (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -227,7 +231,12 @@
       (onEncrypt args)
       (in? #{"-d" "--decrypt"} c)
       (onDecrypt args)
-      :else (trap! CmdError))))
+      :else (throwBadData "CmdError"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn prnGenerate
+  "" {:no-doc true} [args] (prn!! (onGenerate args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -328,7 +337,7 @@
   (if (and (not-empty args)
            (in? #{"-e" "--eclipse"} (args 0)))
     (genEclipseProj (getProcDir))
-    (trap! CmdError)))
+    (throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -340,7 +349,7 @@
 
   (let
     [clj (Cljrt/newrt (getCldr) "clj")
-     pfx (strKW :czlab.wabbit.plugs.io)
+     pfx (strKW :czlab.wabbit.plugs)
      specs
      {:RepeatingTimer :loops/RepeatingTimerSpec
       :OnceTimer :loops/OnceTimerSpec
@@ -362,7 +371,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onHelp-Help "" [] (trap! CmdError))
+(defn onHelp-Help "" [] (throwBadData "CmdError"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -372,7 +381,7 @@
 
   (let [c (keyword (first args))
         [_ h] ((getTasks) c)]
-    (if (fn? h) (h) (trap! CmdError))))
+    (if (fn? h) (h) (throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -387,7 +396,7 @@
    :help [onHelp onHelp-Help]
    :run [onStart onHelp-Start]
    :demos [onDemos onHelp-Demos]
-   :generate [onGenerate onHelp-Generate]
+   :generate [prnGenerate onHelp-Generate]
    :testjce [onTestJCE onHelp-TestJCE]
    :version [onVersion onHelp-Version]})
 

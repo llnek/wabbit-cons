@@ -15,21 +15,20 @@
   (:use [czlab.wabbit.cons.con1]
         [czlab.wabbit.cons.con2]
         [czlab.wabbit.cons.con7]
-        [czlab.wabbit.base.core]
+        [czlab.wabbit.base]
         [czlab.basal.core]
         [czlab.basal.io]
         [czlab.basal.str]
         [clojure.test])
 
-  (:import [czlab.wabbit.cons CmdError]
-           [java.io File ]))
+  (:import [java.io File]
+           [czlab.jasal DataError]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (deftest czlabtestwabbitcons-test
 
-  (is (= "hello"
-         (gtid (with-meta {:a 1} {:typeid "hello"}))))
+  (is (= "hello" (gtid "hello")))
 
   (is (> (count (expandSysProps "${user.home}")) 0))
   (is (> (count (expandEnvVars "${HOME}")) 0))
@@ -44,8 +43,8 @@
         (deleteQ t)
         ok))
 
-  (is (let [m (muble<> {:s "hello.txt"
-                        :f (io/file "hello.txt")})]
+  (is (let [m {:s "hello.txt"
+               :f (io/file "hello.txt")}]
         (and (ist? File (maybeDir m :s))
              (ist? File (maybeDir m :f)))))
 
@@ -75,59 +74,47 @@
              (string? (:a m))
              (> (count (:a m)) 0))))
 
-  (is (== 17 (-> (with-out-str
-                   (onGenerate ["--password" "17"] ))
+  (is (== 17 (-> (onGenerate ["--password" "17"] )
                  (trimr "\n")
                  count)))
-  (is (== 13 (-> (with-out-str
-                   (onGenerate ["-p" "13"] ))
+  (is (== 13 (-> (onGenerate ["-p" "13"] )
                  (trimr "\n")
                  count)))
 
-  (is (> (-> (with-out-str
-               (onGenerate ["--hash" "hello"]))
+  (is (> (-> (onGenerate ["--hash" "hello"])
              (trimr "\n")
              count) 0))
-  (is (> (-> (with-out-str
-               (onGenerate ["-h" "hello"]))
-             (trimr "\n")
-             count) 0))
-
-  (is (> (-> (with-out-str
-               (onGenerate ["--uuid"]))
-             (trimr "\n")
-             count) 0))
-  (is (> (-> (with-out-str
-               (onGenerate ["-u"]))
+  (is (> (-> (onGenerate ["-h" "hello"])
              (trimr "\n")
              count) 0))
 
-  (is (> (-> (with-out-str
-               (onGenerate ["--wwid"]))
+  (is (> (-> (onGenerate ["--uuid"])
              (trimr "\n")
              count) 0))
-  (is (> (-> (with-out-str
-               (onGenerate ["-w"]))
+  (is (> (-> (onGenerate ["-u"])
              (trimr "\n")
              count) 0))
 
-  (is (let [e (-> (with-out-str
-                    (onGenerate ["--encrypt" "secret" "hello"]))
+  (is (> (-> (onGenerate ["--wwid"])
+             (trimr "\n")
+             count) 0))
+  (is (> (-> (onGenerate ["-w"])
+             (trimr "\n")
+             count) 0))
+
+  (is (let [e (-> (onGenerate ["--encrypt" "secret" "hello"])
                   (trimr "\n"))
-            d (-> (with-out-str
-                    (onGenerate ["--decrypt" "secret" e]))
+            d (-> (onGenerate ["--decrypt" "secret" e])
                   (trimr "\n"))]
         (= d "hello")))
 
-  (is (let [e (-> (with-out-str
-                    (onGenerate ["-e" "secret" "hello"]))
+  (is (let [e (-> (onGenerate ["-e" "secret" "hello"])
                   (trimr "\n"))
-            d (-> (with-out-str
-                    (onGenerate ["-d" "secret" e]))
+            d (-> (onGenerate ["-d" "secret" e])
                   (trimr "\n"))]
         (= d "hello")))
 
-  (is (thrown? CmdError (onGenerate ["-bbbbb"])))
+  (is (thrown? DataError (onGenerate ["-bbbbb"])))
 
   (is (string? "That's all folks!")))
 

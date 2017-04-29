@@ -15,7 +15,7 @@
 
   (:gen-class)
 
-  (:require [czlab.wabbit.base.core :as bcc :refer :all]
+  (:require [czlab.wabbit.base :as bcc :refer :all]
             [czlab.basal.io :refer [dirRead?]]
             [czlab.basal.logging :as log]
             [clojure.java.io :as io]
@@ -29,8 +29,7 @@
         [czlab.basal.str]
         [czlab.wabbit.cons.con1])
 
-  (:import [czlab.wabbit.cons CmdError]
-           [czlab.jasal I18N]
+  (:import [czlab.jasal DataError I18N]
            [java.io File]
            [java.util ResourceBundle List Locale]))
 
@@ -101,15 +100,15 @@
     (sysProp! "wabbit.version" verStr)
     (I18N/setBase rcb)
     (try
-      (if (empty? args)(trap! CmdError))
+      (if (empty? args)(throwBadData "CmdError"))
       (let [[f _]
             (-> (keyword (first args))
                 *wabbit-tasks* )]
         (if (fn? f)
           (f (vec (drop 1 args)))
-          (trap! CmdError)))
+          (throwBadData "CmdError")))
       (catch Throwable _
-        (if (ist? CmdError _) (usage) (prtStk _))))))
+        (if (ist? DataError _) (usage) (prtStk _))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

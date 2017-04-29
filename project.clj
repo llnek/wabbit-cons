@@ -17,16 +17,13 @@
                  [io.czlab/twisty "1.0.0"]]
 
   :plugins [[cider/cider-nrepl "0.14.0"]
-            [lein-javadoc "0.3.0"]
             [lein-codox "0.10.3"]
             [lein-cprint "1.2.0"]]
 
   :main czlab.wabbit.cons.con7
 
   :profiles {:provided {:dependencies
-                        [[org.clojure/clojure "1.8.0" :scope "provided"]
-                         [net.mikera/cljunit "0.6.0" :scope "test"]
-                         [junit/junit "4.12" :scope "test"]]}
+                        [[org.clojure/clojure "1.8.0" :scope "provided"]]}
              :run {:global-vars ^:replace {*warn-on-reflection* false}}
              :uberjar {:aot :all}}
 

@@ -17,13 +17,12 @@
             [clojure.string :as cs]
             [clojure.java.io :as io])
 
-  (:use [czlab.wabbit.base.core]
+  (:use [czlab.wabbit.base]
         [czlab.basal.core]
         [czlab.basal.io]
         [czlab.basal.str])
 
-  (:import [czlab.wabbit.cons CmdError]
-           [java.io File]))
+  (:import [java.io File]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
