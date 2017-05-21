@@ -15,19 +15,18 @@
 
   (:gen-class)
 
-  (:require [czlab.wabbit.base :as bcc :refer :all]
-            [czlab.basal.io :refer [dirRead?]]
-            [czlab.basal.logging :as log]
+  (:require [czlab.basal.io :as i :refer [dirRead?]]
+            [czlab.wabbit.base :as b]
+            [czlab.basal.log :as log]
             [clojure.java.io :as io]
             [io.aviso.ansi :as ansi]
-            [czlab.table.core :as tbl])
-
-  (:use [czlab.wabbit.cons.con2]
-        [czlab.basal.resources]
-        [czlab.basal.format]
-        [czlab.basal.core]
-        [czlab.basal.str]
-        [czlab.wabbit.cons.con1])
+            [czlab.table.core :as tbl]
+            [czlab.basal.resources :as r]
+            [czlab.basal.format :as f]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s]
+            [czlab.wabbit.cons.con2 :as c2]
+            [czlab.wabbit.cons.con1 :as c1])
 
   (:import [czlab.jasal DataError I18N]
            [java.io File]
@@ -42,7 +41,7 @@
 
   (partition
     2
-    (rstr*
+    (r/rstr*
       rcb
       ["usage.new"] ["usage.new.desc"]
       ["usage.svc"] ["usage.svc.desc"]
@@ -74,18 +73,18 @@
             :header-walls walls
             :body-walls walls}
      rcb (I18N/base)]
-    (prn!! (ansi/bold-yellow (bannerText)))
-    (prn! "%s\n\n" (rstr rcb "wabbit.desc"))
-    (prn! "%s\n" (rstr rcb "cmds.header"))
+    (c/prn!! (ansi/bold-yellow (c1/bannerText)))
+    (c/prn! "%s\n\n" (r/rstr rcb "wabbit.desc"))
+    (c/prn! "%s\n" (r/rstr rcb "cmds.header"))
     ;; prepend blanks to act as headers
-    (prn! "%s\n\n"
-          (strim
-            (with-out-str
-              (-> (concat '(("" ""))
-                          (getCmdInfo rcb))
-                  (tbl/table :style style)))))
-    (prn! "%s\n" (rstr rcb "cmds.trailer"))
-    (prn!! "")
+    (c/prn! "%s\n\n"
+            (s/strim
+              (with-out-str
+                (-> (concat '(("" ""))
+                            (getCmdInfo rcb))
+                    (tbl/table :style style)))))
+    (c/prn! "%s\n" (r/rstr rcb "cmds.trailer"))
+    (c/prn!! "")
     ;;the table module causes some agent stuff to hang
     ;;the vm without exiting, so shut them down
     (shutdown-agents)))
@@ -94,21 +93,21 @@
 ;;
 (defn -main "" [& args]
 
-  (let [ver (loadResource bcc/c-verprops)
-        rcb (getResource bcc/c-rcb)
+  (let [ver (r/loadResource b/c-verprops)
+        rcb (r/getResource b/c-rcb)
         verStr (or (some-> ver (.getString "version")) "?")]
-    (sysProp! "wabbit.version" verStr)
+    (c/sysProp! "wabbit.version" verStr)
     (I18N/setBase rcb)
     (try
-      (if (empty? args)(throwBadData "CmdError"))
+      (if (empty? args)(c/throwBadData "CmdError"))
       (let [[f _]
             (-> (keyword (first args))
-                *wabbit-tasks* )]
+                c1/*wabbit-tasks* )]
         (if (fn? f)
           (f (vec (drop 1 args)))
-          (throwBadData "CmdError")))
+          (c/throwBadData "CmdError")))
       (catch Throwable _
-        (if (ist? DataError _) (usage) (prtStk _))))))
+        (if (c/ist? DataError _) (usage) (c/prtStk _))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF

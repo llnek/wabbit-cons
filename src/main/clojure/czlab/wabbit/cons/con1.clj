@@ -11,24 +11,23 @@
 
   czlab.wabbit.cons.con1
 
-  (:require [czlab.basal.format :refer [writeEdnStr readEdn]]
-            [czlab.wabbit.core :refer [startViaCons]]
-            [czlab.twisty.core :refer [assertJce]]
-            [czlab.basal.resources :refer [rstr]]
-            [czlab.twisty.codec :refer :all]
-            [czlab.basal.logging :as log]
+  (:require [czlab.basal.format :as f :refer [writeEdnStr readEdn]]
+            [czlab.wabbit.core :as wc :refer [startViaCons]]
+            [czlab.twisty.core :as tc :refer [assertJce]]
+            [czlab.basal.resources :as r :refer [rstr]]
+            [czlab.twisty.codec :as co]
+            [czlab.basal.log :as log]
             [czlab.antclj.antlib :as a]
             [clojure.java.io :as io]
             [io.aviso.ansi :as ansi]
-            [clojure.string :as cs])
-
-  (:use [czlab.wabbit.cons.con2]
-        [czlab.wabbit.base]
-        [czlab.basal.guids]
-        [czlab.basal.core]
-        [czlab.basal.str]
-        [czlab.basal.io]
-        [czlab.basal.meta])
+            [clojure.string :as cs]
+            [czlab.wabbit.base :as b]
+            [czlab.basal.guids :as g]
+            [czlab.basal.core :as c]
+            [czlab.basal.str :as s]
+            [czlab.basal.io :as i]
+            [czlab.basal.meta :as m]
+            [czlab.wabbit.cons.con2 :as c2])
 
   (:import [org.apache.commons.io FileUtils]
            [czlab.basal Cljrt]
@@ -61,7 +60,7 @@
 (defn- onHelpXXX "" [pfx end]
   (let [rcb (I18N/base)]
     (dotimes [n end]
-      (prn! "%s\n" (rstr rcb (str pfx (inc n))))) (println)))
+      (c/prn! "%s\n" (r/rstr rcb (str pfx (inc n))))) (println)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -73,9 +72,9 @@
   "Create a new pod"
   {:no-doc true} [args]
   (if (not-empty args)
-    (apply createPod
+    (apply c2/createPod
            (args 0)
-           (drop 1 args)) (throwBadData "CmdError")))
+           (drop 1 args)) (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -85,7 +84,7 @@
 ;;
 (defn- bundlePod "" [podDir outDir]
 
-  (let [dir (mkdirs (io/file outDir))
+  (let [dir (i/mkdirs (io/file outDir))
         a (io/file podDir)]
     (a/run*
       (a/zip
@@ -99,8 +98,8 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (bundlePod (getProcDir) (args 0))
-    (throwBadData "CmdError")))
+    (bundlePod (b/getProcDir) (args 0))
+    (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -113,35 +112,35 @@
   (let
     [progW (io/file podDir "bin/wabbit.bat")
      prog (io/file podDir "bin/wabbit")
-     tk (if (isWindows?)
+     tk (if (c/isWindows?)
           (a/exec
             {:executable "cmd.exe"
              :dir podDir}
             [[:argvalues ["/C" "start" "/B"
                           "/MIN"
-                          (fpath progW) "run"]]]))
+                          (c/fpath progW) "run"]]]))
      _ (if false
           (a/exec
-            {:executable (fpath prog)
+            {:executable (c/fpath prog)
              :dir podDir}
             [[:argvalues ["run" "bg"]]]))]
     (if tk
-      (a/run* tk) (throwBadData "CmdError"))))
+      (a/run* tk) (c/throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn onStart
   "" {:no-doc true} [args]
 
-  (let [cwd (getProcDir)
+  (let [cwd (b/getProcDir)
         s2 (first args)]
     ;; background job is handled differently on windows
-    (if (and (in? #{"-bg" "--background"} s2)
-             (isWindows?))
+    (if (and (c/in? #{"-bg" "--background"} s2)
+             (c/isWindows?))
       (runPodBg cwd)
       (do
-        (prn!! (ansi/bold-yellow (bannerText)))
-        (startViaCons cwd)))))
+        (c/prn!! (ansi/bold-yellow (bannerText)))
+        (wc/startViaCons cwd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -161,51 +160,53 @@
   "" {:no-doc true} [args]
 
   (if-not (empty? args)
-    (publishSamples (args 0)) (throwBadData "CmdError")))
+    (c2/publishSamples (args 0)) (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn genPwd "" [args]
 
   (let [c (first args)
-        n (convLong (str c) 16)]
+        n (c/convLong (str c) 16)]
     (if (and (>= n 8)
              (<= n 48))
-      (-> (strongPwd<> n) p-text strit) (throwBadData "CmdError"))))
+      (-> (co/strongPwd<> n)
+          co/p-text c/strit)
+      (c/throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn genWwid "" [] (wwid<>))
+(defn genWwid "" [] (g/wwid<>))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn genGuid "" [] (uuid<>))
+(defn genGuid "" [] (c/uuid<>))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onEncrypt "" [args]
 
   (if (> (count args) 1)
-    (->> (pwd<> (args 1)
-                (args 0)) p-encoded strit )
-    (throwBadData "CmdError")))
+    (->> (co/pwd<> (args 1)
+                   (args 0)) co/p-encoded c/strit )
+    (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onDecrypt "" [args]
 
   (if (> (count args) 1)
-    (->> (pwd<> (args 1)
-                (args 0)) p-text strit )
-    (throwBadData "CmdError")))
+    (->> (co/pwd<> (args 1)
+                   (args 0)) co/p-text c/strit )
+    (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onHash "" [args]
 
   (if-not (empty? args)
-    (-> (hashed (pwd<> (first args)))  )
-    (throwBadData "CmdError")))
+    (-> (co/hashed (co/pwd<> (first args))))
+    (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -219,24 +220,24 @@
   (let [c (first args)
         args (vec (drop 1 args))]
     (cond
-      (in? #{"-p" "--password"} c)
+      (c/in? #{"-p" "--password"} c)
       (genPwd args)
-      (in? #{"-h" "--hash"} c)
+      (c/in? #{"-h" "--hash"} c)
       (onHash args)
-      (in? #{"-u" "--uuid"} c)
+      (c/in? #{"-u" "--uuid"} c)
       (genGuid)
-      (in? #{"-w" "--wwid"} c)
+      (c/in? #{"-w" "--wwid"} c)
       (genWwid)
-      (in? #{"-e" "--encrypt"} c)
+      (c/in? #{"-e" "--encrypt"} c)
       (onEncrypt args)
-      (in? #{"-d" "--decrypt"} c)
+      (c/in? #{"-d" "--decrypt"} c)
       (onDecrypt args)
-      :else (throwBadData "CmdError"))))
+      :else (c/throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn prnGenerate
-  "" {:no-doc true} [args] (prn!! (onGenerate args)))
+  "" {:no-doc true} [args] (c/prn!! (onGenerate args)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -248,8 +249,8 @@
   "" {:no-doc true} [args]
 
   (let [rcb (I18N/base)]
-    (assertJce)
-    (prn!! (rstr rcb "usage.testjce.ok"))))
+    (tc/assertJce)
+    (c/prn!! (r/rstr rcb "usage.testjce.ok"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -261,28 +262,28 @@
   "" {:no-doc true} [args]
 
   (let [rcb (I18N/base)]
-    (->> (sysProp "wabbit.version")
-         (rstr rcb "usage.version.o1")
-         (prn! "%s\n" ))
-    (->> (sysProp "java.version")
-         (rstr rcb "usage.version.o2")
-         (prn! "%s\n" ))
-    (prn!! "")))
+    (->> (c/sysProp "wabbit.version")
+         (r/rstr rcb "usage.version.o1")
+         (c/prn! "%s\n" ))
+    (->> (c/sysProp "java.version")
+         (r/rstr rcb "usage.version.o2")
+         (c/prn! "%s\n" ))
+    (c/prn!! "")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- scanJars "" [out dir]
 
-  (let [sep (sysProp "line.separator")]
+  (let [sep (c/sysProp "line.separator")]
     (reduce
       (fn [^StringBuilder b f]
          (.append b
                   (str "<classpathentry  "
                        "kind=\"lib\""
-                       " path=\"" (fpath f) "\"/>"))
+                       " path=\"" (c/fpath f) "\"/>"))
          (.append b sep))
       out
-      (listFiles dir ".jar"))))
+      (i/listFiles dir ".jar"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -291,38 +292,38 @@
   (let [ec (io/file pdir "eclipse.projfiles")
         poddir (io/file pdir)
         pod (.getName poddir)
-        sb (strbf<>)]
-    (mkdirs ec)
+        sb (s/strbf<>)]
+    (i/mkdirs ec)
     (FileUtils/cleanDirectory ec)
-    (writeFile
+    (i/writeFile
       (io/file ec ".project")
-      (-> (resStr (str "czlab/wabbit/eclipse/"
-                       "java"
-                       "/project.txt"))
+      (-> (c/resStr (str "czlab/wabbit/eclipse/"
+                         "java"
+                         "/project.txt"))
           (cs/replace "${APP.NAME}" pod)
           (cs/replace "${JAVA.TEST}"
-                      (fpath (io/file poddir
-                                      "src/test/java")))
+                      (c/fpath (io/file poddir
+                                        "src/test/java")))
           (cs/replace "${JAVA.SRC}"
-                      (fpath (io/file poddir
-                                      "src/main/java")))
+                      (c/fpath (io/file poddir
+                                        "src/main/java")))
           (cs/replace "${CLJ.TEST}"
-                      (fpath (io/file poddir
-                                      "src/test/clojure")))
+                      (c/fpath (io/file poddir
+                                        "src/test/clojure")))
           (cs/replace "${CLJ.SRC}"
-                      (fpath (io/file poddir
-                                      "src/main/clojure")))))
-    (mkdirs (io/file poddir dn-build "classes"))
+                      (c/fpath (io/file poddir
+                                        "src/main/clojure")))))
+    (i/mkdirs (io/file poddir b/dn-build "classes"))
     (doall
       (map (partial scanJars sb)
-           [(io/file (getHomeDir) dn-dist)
-            (io/file (getHomeDir) dn-lib)
-            (io/file poddir dn-target)]))
-    (writeFile
+           [(io/file (getHomeDir) b/dn-dist)
+            (io/file (getHomeDir) b/dn-lib)
+            (io/file poddir b/dn-target)]))
+    (i/writeFile
       (io/file ec ".classpath")
-      (-> (resStr (str "czlab/wabbit/eclipse/"
-                       "java"
-                       "/classpath.txt"))
+      (-> (c/resStr (str "czlab/wabbit/eclipse/"
+                         "java"
+                         "/classpath.txt"))
           (cs/replace "${CLASS.PATH.ENTRIES}" (str sb))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -335,9 +336,9 @@
   "" {:no-doc true} [args]
 
   (if (and (not-empty args)
-           (in? #{"-e" "--eclipse"} (args 0)))
-    (genEclipseProj (getProcDir))
-    (throwBadData "CmdError")))
+           (c/in? #{"-e" "--eclipse"} (args 0)))
+    (genEclipseProj (b/getProcDir))
+    (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -348,8 +349,8 @@
 (defn onServiceSpecs "" [args]
 
   (let
-    [clj (Cljrt/newrt (getCldr) "clj")
-     pfx (strKW :czlab.wabbit.plugs)
+    [clj (Cljrt/newrt (m/getCldr) "clj")
+     pfx (s/strKW :czlab.wabbit.plugs)
      specs
      {:RepeatingTimer :loops/RepeatingTimerSpec
       :OnceTimer :loops/OnceTimerSpec
@@ -360,18 +361,18 @@
       :IMAP :mails/IMAPSpec
       :HTTP :http/HTTPSpec}
      rc
-     (preduce<map>
+     (c/preduce<map>
        #(let
           [[k s] %2
            spec (.call clj
-                       (str pfx "." (strKW s)))]
+                       (str pfx "." (s/strKW s)))]
           (assoc! %1 k spec))
        specs)]
-    (prn!! (writeEdnStr rc))))
+    (c/prn!! (f/writeEdnStr rc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn onHelp-Help "" [] (throwBadData "CmdError"))
+(defn onHelp-Help "" [] (c/throwBadData "CmdError"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -381,7 +382,7 @@
 
   (let [c (keyword (first args))
         [_ h] ((getTasks) c)]
-    (if (fn? h) (h) (throwBadData "CmdError"))))
+    (if (fn? h) (h) (c/throwBadData "CmdError"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

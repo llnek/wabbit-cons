@@ -12,15 +12,14 @@
   czlab.wabbit.cons.con2
 
   (:require [czlab.wabbit.shared.new :as ws]
-            [czlab.basal.logging :as log]
+            [czlab.basal.log :as log]
             [stencil.core :as sc]
             [clojure.string :as cs]
-            [clojure.java.io :as io])
-
-  (:use [czlab.wabbit.base]
-        [czlab.basal.core]
-        [czlab.basal.io]
-        [czlab.basal.str])
+            [clojure.java.io :as io]
+            [czlab.basal.core :as c]
+            [czlab.basal.io :as i]
+            [czlab.basal.str :as s]
+            [czlab.wabbit.base :as b])
 
   (:import [java.io File]))
 
@@ -32,7 +31,7 @@
 ;;simulate what lein new template does
 (defn createPod "" [name & args]
 
-  (prn!! "Generating fresh 'wabbit' project.")
+  (c/prn!! "Generating fresh 'wabbit' project.")
   (try
     (let
       [dir (second (drop-while #(not= "--to-dir" %) args))
@@ -42,13 +41,13 @@
         (some? (first (drop-while
                         #(not= "--force" %) args)))
         :dir (or dir
-                 (-> (getCwd)
+                 (-> (c/getCwd)
                      (io/file name) .getPath))}]
       ;;(prn!! "opts = " options)
       (apply ws/new<> name options args))
     (catch Throwable t
-      (prn!! "failed to generate project")
-      (prn!! (.getMessage t)))))
+      (c/prn!! "failed to generate project")
+      (c/prn!! (.getMessage t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
