@@ -41,19 +41,15 @@
            [czlab.jasal I18N]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;dummy
-(defn- getHomeDir [])
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* true)
+
+(def ^:dynamic *config-object* nil)
+(def ^:dynamic *pkey-object* nil)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn bannerText
-  "" {:no-doc true
-      :tag String} []
-  (str  "              __   __   _ __ " "\n"
-        " _    _____ _/ /  / /  (_) /_" "\n"
-        "| |/|/ / _ `/ _ \\/ _ \\/ / __/" "\n"
-        "|__,__/\\_,_/_.__/_.__/_/\\__/ " "\n"))
+(defn getHomeDir []
+  (io/file (System/getProperty "user.dir")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -139,7 +135,7 @@
              (c/isWindows?))
       (runPodBg cwd)
       (do
-        (c/prn!! (ansi/bold-yellow (bannerText)))
+        (c/prn!! (ansi/bold-yellow (b/bannerText)))
         (wc/startViaCons cwd)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -186,19 +182,31 @@
 ;;
 (defn- onEncrypt "" [args]
 
-  (if (> (count args) 1)
-    (->> (co/pwd<> (args 1)
-                   (args 0)) co/p-encoded c/strit )
-    (c/throwBadData "CmdError")))
+  (let [c (count args)
+        [s k]
+        (cond
+          (== 1 c) [(args 0) *pkey-object*]
+          (== 2 c) [(args 1)(args 0)]
+          :else
+          (c/throwBadData "CmdError"))]
+    (try
+      (->> (co/pwd<> s k) co/p-encoded c/strit)
+      (catch Throwable _ (println "Failed to encrypt")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onDecrypt "" [args]
 
-  (if (> (count args) 1)
-    (->> (co/pwd<> (args 1)
-                   (args 0)) co/p-text c/strit )
-    (c/throwBadData "CmdError")))
+  (let [c (count args)
+        [s k]
+        (cond
+          (== 1 c) [(args 0) *pkey-object*]
+          (== 2 c) [(args 1)(args 0)]
+          :else
+          (c/throwBadData "CmdError"))]
+    (try
+      (->> (co/pwd<> s k) co/p-text c/strit)
+      (catch Throwable _ (println "Failed to decrypt")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;

@@ -73,7 +73,7 @@
             :header-walls walls
             :body-walls walls}
      rcb (I18N/base)]
-    (c/prn!! (ansi/bold-yellow (c1/bannerText)))
+    (c/prn!! (ansi/bold-yellow (b/bannerText)))
     (c/prn! "%s\n\n" (r/rstr rcb "wabbit.desc"))
     (c/prn! "%s\n" (r/rstr rcb "cmds.header"))
     ;; prepend blanks to act as headers
@@ -92,7 +92,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn -main "" [& args]
-
   (let [ver (r/loadResource b/c-verprops)
         rcb (r/getResource b/c-rcb)
         verStr (or (some-> ver (.getString "version")) "?")]
@@ -104,7 +103,12 @@
             (-> (keyword (first args))
                 c1/*wabbit-tasks* )]
         (if (fn? f)
-          (f (vec (drop 1 args)))
+          (binding [c1/*config-object* (b/slurpXXXConf
+                                         (c1/getHomeDir) b/cfg-pod-cf)
+                    c1/*pkey-object* (-> c1/*config-object*
+                                         (get-in [:info :digest])
+                                         c/charsit )]
+            (f (vec (drop 1 args))))
           (c/throwBadData "CmdError")))
       (catch Throwable _
         (if (c/ist? DataError _) (usage) (c/prtStk _))))))
