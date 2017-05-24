@@ -43,18 +43,18 @@
     2
     (r/rstr*
       rcb
-      ["usage.new"] ["usage.new.desc"]
-      ["usage.svc"] ["usage.svc.desc"]
-      ["usage.podify"] ["usage.podify.desc"]
-      ["usage.ide"] [ "usage.ide.desc"]
-      ["usage.build"] [ "usage.build.desc"]
-      ["usage.test"] [ "usage.test.desc"]
+      ;;["usage.new"] ["usage.new.desc"]
+      ;;["usage.svc"] ["usage.svc.desc"]
+      ;;["usage.podify"] ["usage.podify.desc"]
+      ;;["usage.ide"] [ "usage.ide.desc"]
+      ;;["usage.build"] [ "usage.build.desc"]
+      ;;["usage.test"] [ "usage.test.desc"]
 
-      ["usage.debug"] ["usage.debug.desc"]
-      ["usage.start"] ["usage.start.desc"]
+      ;;["usage.debug"] ["usage.debug.desc"]
+      ;;["usage.start"] ["usage.start.desc"]
 
       ["usage.gen"] [ "usage.gen.desc"]
-      ["usage.demo"] [ "usage.demo.desc"]
+      ;;["usage.demo"] [ "usage.demo.desc"]
       ["usage.version"] [ "usage.version.desc"]
 
       ["usage.testjce"] ["usage.testjce.desc"]
@@ -99,17 +99,26 @@
     (I18N/setBase rcb)
     (try
       (if (empty? args)(c/throwBadData "CmdError"))
-      (let [[f _]
-            (-> (keyword (first args))
-                c1/*wabbit-tasks* )]
-        (if (fn? f)
-          (binding [c1/*config-object* (b/slurpXXXConf
-                                         (c1/getHomeDir) b/cfg-pod-cf)
-                    c1/*pkey-object* (-> c1/*config-object*
-                                         (get-in [:info :digest])
-                                         c/charsit )]
-            (f (vec (drop 1 args))))
-          (c/throwBadData "CmdError")))
+      (let [[p1 p2 & _] args
+            pred #(and (or (= "--home" %1)
+                           (= "-home" %1))
+                       (s/hgl? %2))
+            args (if (pred p1 p2) (drop 2 args) args)]
+        (->> (if (pred p1 p2) p2 (c/getCwd))
+             io/file
+             c/fpath
+             (c/sysProp! "wabbit.user.dir"))
+        (let [[f _]
+              (-> (keyword (first args))
+                  c1/*wabbit-tasks* )]
+          (if (fn? f)
+            (binding [c1/*config-object* (b/slurpXXXConf
+                                           (c1/getHomeDir) b/cfg-pod-cf)
+                      c1/*pkey-object* (-> c1/*config-object*
+                                           (get-in [:info :digest])
+                                           c/charsit )]
+              (f (vec (drop 1 args))))
+            (c/throwBadData "CmdError"))))
       (catch Throwable _
         (if (c/ist? DataError _) (usage) (c/prtStk _))))))
 
