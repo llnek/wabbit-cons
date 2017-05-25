@@ -101,6 +101,10 @@
 ;;
 (defn- onHelp-Start "" [] (onHelpXXX "usage.start.d" 4))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- onHelp-Stop "" [] (onHelpXXX "usage.stop.d" 2))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- runPodBg "" [podDir]
@@ -137,6 +141,11 @@
       (do
         (c/prn!! (ansi/bold-yellow (b/bannerText)))
         (wc/startViaCons cwd)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn onStop
+  "" {:no-doc true} [args])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -213,12 +222,19 @@
 (defn- onHash "" [args]
 
   (if-not (empty? args)
-    (-> (co/hashed (co/pwd<> (first args))))
+    (tc/genDigest<> (first args))
     (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- onHelp-Generate "" [] (onHelpXXX "usage.gen.d" 8))
+(defn- onMac "" [args]
+  (if-not (empty? args)
+    (tc/genMac<> *pkey-object* (first args))
+    (c/throwBadData "CmdError")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+(defn- onHelp-Generate "" [] (onHelpXXX "usage.gen.d" 9))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -232,6 +248,8 @@
       (genPwd args)
       (c/in? #{"-h" "--hash"} c)
       (onHash args)
+      (c/in? #{"-m" "--mac"} c)
+      (onMac args)
       (c/in? #{"-u" "--uuid"} c)
       (genGuid)
       (c/in? #{"-w" "--wwid"} c)
@@ -404,8 +422,9 @@
    :debug [onDebug onHelp-Debug]
    :help [onHelp onHelp-Help]
    :run [onStart onHelp-Start]
+   :stop [onStop onHelp-Stop]
    :demos [onDemos onHelp-Demos]
-   :generate [prnGenerate onHelp-Generate]
+   :crypto [prnGenerate onHelp-Generate]
    :testjce [onTestJCE onHelp-TestJCE]
    :version [onVersion onHelp-Version]})
 

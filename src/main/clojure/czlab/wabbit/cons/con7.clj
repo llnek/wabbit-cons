@@ -37,35 +37,24 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn- getCmdInfo "" [rcb]
+(defn- getCmdInfo "" [rcb pod?]
 
-  (partition
-    2
-    (r/rstr*
-      rcb
-      ;;["usage.new"] ["usage.new.desc"]
-      ;;["usage.svc"] ["usage.svc.desc"]
-      ;;["usage.podify"] ["usage.podify.desc"]
-      ;;["usage.ide"] [ "usage.ide.desc"]
-      ;;["usage.build"] [ "usage.build.desc"]
-      ;;["usage.test"] [ "usage.test.desc"]
-
-      ;;["usage.debug"] ["usage.debug.desc"]
-      ;;["usage.start"] ["usage.start.desc"]
-
-      ["usage.gen"] [ "usage.gen.desc"]
-      ;;["usage.demo"] [ "usage.demo.desc"]
-      ["usage.version"] [ "usage.version.desc"]
-
-      ["usage.testjce"] ["usage.testjce.desc"]
-      ["usage.help"] ["usage.help.desc"])))
+  (let [arr '(["usage.gen"] [ "usage.gen.desc"]
+              ["usage.version"] [ "usage.version.desc"]
+              ["usage.testjce"] ["usage.testjce.desc"]
+              ["usage.help"] ["usage.help.desc"])
+        arr (if pod?
+              (concat '(["usage.debug"] ["usage.debug.desc"]
+                        ["usage.start"] ["usage.start.desc"]
+                        ["usage.stop"] ["usage.stop.desc"]) arr) arr)]
+    (partition 2 (apply r/rstr* rcb arr))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-(defn usage "" []
+(defn- usage "" [pod?]
 
   (let
-    [walls ["" "   " ""]
+    [walls ["" "        " ""]
      style {:middle ["" "" ""]
             :bottom ["" "" ""]
             :top ["" "" ""]
@@ -81,7 +70,7 @@
             (s/strim
               (with-out-str
                 (-> (concat '(("" ""))
-                            (getCmdInfo rcb))
+                            (getCmdInfo rcb pod?))
                     (tbl/table :style style)))))
     (c/prn! "%s\n" (r/rstr rcb "cmds.trailer"))
     (c/prn!! "")
@@ -94,33 +83,31 @@
 (defn -main "" [& args]
   (let [ver (r/loadResource b/c-verprops)
         rcb (r/getResource b/c-rcb)
+        [p1 p2 & _] args
+        pod? (= "-domus" p1)
         verStr (or (some-> ver (.getString "version")) "?")]
     (c/sysProp! "wabbit.version" verStr)
     (I18N/setBase rcb)
     (try
       (if (empty? args)(c/throwBadData "CmdError"))
-      (let [[p1 p2 & _] args
-            pred #(and (or (= "--home" %1)
-                           (= "-home" %1))
-                       (s/hgl? %2))
+      (let [pred #(and (or (= "-home" %1)
+                           pod?) (s/hgl? %2))
             args (if (pred p1 p2) (drop 2 args) args)]
         (->> (if (pred p1 p2) p2 (c/getCwd))
              io/file
              c/fpath
              (c/sysProp! "wabbit.user.dir"))
-        (let [[f _]
-              (-> (keyword (first args))
-                  c1/*wabbit-tasks* )]
+        (let [cfg (b/slurpXXXConf (c1/getHomeDir) b/cfg-pod-cf)
+              [f _] (-> (keyword (first args)) c1/*wabbit-tasks* )]
           (if (fn? f)
-            (binding [c1/*config-object* (b/slurpXXXConf
-                                           (c1/getHomeDir) b/cfg-pod-cf)
-                      c1/*pkey-object* (-> c1/*config-object*
-                                           (get-in [:info :digest])
+            (binding [c1/*config-object* cfg
+                      c1/*pkey-object* (-> (get-in cfg
+                                                   [:info :digest])
                                            c/charsit )]
               (f (vec (drop 1 args))))
             (c/throwBadData "CmdError"))))
       (catch Throwable _
-        (if (c/ist? DataError _) (usage) (c/prtStk _))))))
+        (if (c/ist? DataError _) (usage pod?) (c/prtStk _))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;EOF
