@@ -222,14 +222,14 @@
 (defn- onHash "" [args]
 
   (if-not (empty? args)
-    (tc/genDigest<> (first args))
+    (tc/genDigest (first args))
     (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- onMac "" [args]
   (if-not (empty? args)
-    (tc/genMac<> *pkey-object* (first args))
+    (tc/genMac *pkey-object* (first args))
     (c/throwBadData "CmdError")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

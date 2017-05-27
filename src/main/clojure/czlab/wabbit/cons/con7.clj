@@ -35,6 +35,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;(set! *warn-on-reflection* false)
 
+(def ^:private c-rcb "czlab.wabbit.base/Resources")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 (defn- getCmdInfo "" [rcb pod?]
@@ -82,7 +84,7 @@
 ;;
 (defn -main "" [& args]
   (let [ver (r/loadResource b/c-verprops)
-        rcb (r/getResource b/c-rcb)
+        rcb (r/getResource c-rcb)
         [p1 p2 & _] args
         pod? (= "-domus" p1)
         verStr (or (some-> ver (.getString "version")) "?")]
