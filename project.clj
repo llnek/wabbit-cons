@@ -5,7 +5,7 @@
   :license {:url "http://www.eclipse.org/legal/epl-v10.html"
             :name "Eclipse Public License"}
 
-  :description ""
+  :description "Console (terminal) for wabbit"
   :url "https://github.com/llnek/wabbit-cons"
 
   :dependencies [[io.czlab/wabbit-shared "1.0.0"]
